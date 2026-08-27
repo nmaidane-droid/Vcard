@@ -30,6 +30,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
+  overflow-x:clip;
   background:var(--creme);
   color:var(--encre);
   font-family:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -60,14 +61,15 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .top p{max-width:46ch;color:var(--gris);margin:14px 0 0;font-size:15px}
 
 /* ---------- grille ---------- */
-.grid{display:grid;gap:clamp(22px,4vw,40px);grid-template-columns:1fr}
+.grid{display:grid;gap:clamp(22px,4vw,40px);grid-template-columns:1fr;min-width:0}
+.col-form,.col-preview{min-width:0}
 @media(min-width:960px){
   .grid{grid-template-columns:minmax(0,1fr) 420px;align-items:start}
   .col-preview{position:sticky;top:24px}
 }
 
 /* ---------- formulaire ---------- */
-.panel{background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r);overflow:hidden}
+.panel{background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r);overflow:hidden;min-width:0}
 .panel + .panel{margin-top:18px}
 .panel-h{
   display:flex;align-items:center;gap:10px;padding:15px 18px;
@@ -124,7 +126,7 @@ input:focus,textarea:focus,select:focus{
    LA CARTE — coupon de vol
    ========================================================== */
 .pass{
-  --notch:15px;
+  --notch:15px;max-width:min(420px,100%);
   background:var(--blanc);border-radius:18px;overflow:hidden;
   box-shadow:0 1px 2px rgba(26,26,46,.06),0 14px 40px -18px rgba(26,26,46,.3);
   border:1px solid var(--trait);
@@ -133,11 +135,12 @@ input:focus,textarea:focus,select:focus{
 .pass-band{background:var(--band);color:var(--blanc);padding:16px 22px 14px;position:relative}
 .pass-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--accent)}
 .pass-band .co{
-  display:flex;align-items:center;justify-content:space-between;gap:12px
+  display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0
 }
 .pass-band .co-name{
   font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.18em;
-  text-transform:uppercase;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  text-transform:uppercase;opacity:.95;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap
 }
 .pass-band .tag{
   font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;
@@ -154,7 +157,7 @@ input:focus,textarea:focus,select:focus{
   color:var(--bordeaux);letter-spacing:.02em
 }
 .pass-id h2{
-  margin:0;font-size:clamp(24px,6.4vw,30px);line-height:1.04;font-weight:800;
+  margin:0;overflow-wrap:anywhere;font-size:clamp(24px,6.4vw,30px);line-height:1.04;font-weight:800;
   font-variation-settings:'wdth' 116,'wght' 800;letter-spacing:-.02em;
   text-transform:uppercase;word-break:break-word
 }
@@ -226,7 +229,7 @@ body.fiche{background:var(--creme);display:block}
 
 /* ---------- QR panneau ---------- */
 .qr-box{text-align:center;padding:6px 0 2px}
-.qr-box canvas{width:100%;max-width:260px;height:auto;image-rendering:pixelated;border-radius:10px;background:#fff}
+.qr-box canvas{width:100%;max-width:min(260px,100%);height:auto;image-rendering:pixelated;border-radius:10px;background:#fff}
 .qr-meta{
   display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:14px;
   font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gris)
@@ -237,25 +240,35 @@ body.fiche{background:var(--creme);display:block}
   background:#fff4f4;border:1px solid rgba(232,0,28,.25);color:#8B0000;text-align:left
 }
 .link-box{
-  display:flex;gap:8px;align-items:center;margin-top:14px;padding:10px 12px;
+  display:flex;gap:8px;align-items:center;margin-top:14px;padding:10px 12px;min-width:0;max-width:100%;
   background:var(--creme);border-radius:9px;
   font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--gris);
   overflow:hidden
 }
-.link-box span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}
+.link-box span{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}
 
 /* ---------- fiches enregistrées ---------- */
 .saved{display:grid;gap:8px}
 .saved-item{
-  display:flex;align-items:center;gap:12px;padding:11px 13px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 13px;
   border:1px solid var(--trait);border-radius:10px;background:var(--blanc)
 }
-.saved-item .nm{flex:1;min-width:0}
+.saved-item .nm{flex:1 1 150px;min-width:0}
+.saved-acts{display:flex;gap:7px;flex:none}
 .saved-item .nm b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .saved-item .nm small{color:var(--gris);font-size:12px}
-.icon-btn{padding:7px;border-radius:8px;color:var(--gris)}
-.icon-btn:hover{background:var(--creme);color:var(--encre)}
-.icon-btn svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:40px;padding:8px 13px;border-radius:9px;
+  border:1px solid var(--trait);background:var(--blanc);color:var(--encre);
+  font-size:12.5px;font-weight:600
+}
+.icon-btn:hover{background:var(--creme)}
+.icon-btn.danger{color:var(--bordeaux);border-color:rgba(139,0,0,.28)}
+.icon-btn.danger:hover{background:#fff4f4}
+.icon-btn.bare{min-height:36px;padding:8px;border-color:transparent}
+.icon-btn.bare:hover{border-color:var(--trait)}
+.icon-btn svg{width:16px;height:16px;display:block;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .empty{text-align:center;color:var(--gris);font-size:13.5px;padding:14px 0}
 
 /* ---------- toast ---------- */
@@ -804,8 +817,12 @@ function viewGenerateur(){
  bSave.addEventListener('click',function(){
   var f=state.f;
   if(!f.prenom&&!f.nom){toast('Renseignez au moins un nom');return;}
-  var arr=loadStore();
-  arr.unshift({id:Date.now(),f:JSON.parse(JSON.stringify(f))});
+  var arr=loadStore(),copie=JSON.parse(JSON.stringify(f));
+  /* Même personne, même société : on met à jour la fiche au lieu d'en empiler une de plus. */
+  var i=arr.findIndex(function(x){return cleFiche(x.f)===cleFiche(f);});
+  if(i>=0){arr.splice(i,1);arr.unshift({id:Date.now(),f:copie});
+   saveStore(arr.slice(0,40));renderSaved();toast('Fiche mise à jour');return;}
+  arr.unshift({id:Date.now(),f:copie});
   saveStore(arr.slice(0,40));renderSaved();toast('Fiche enregistrée sur cet appareil');});
  var bNew=el('button',{class:'btn btn-s',type:'button'},'Nouvelle fiche');
  bNew.addEventListener('click',function(){
@@ -851,6 +868,9 @@ function viewGenerateur(){
   if(t)t.scrollIntoView({behavior:'smooth',block:'center'});};
  renderSaved();refresh();}
 
+function cleFiche(f){
+ return[f.prenom,f.nom,f.societe].map(function(v){
+  return String(v||'').trim().toLowerCase().replace(/\s+/g,' ');}).join('|');}
 function renderSaved(){
  var list=$('#savedList');if(!list)return;
  var arr=loadStore();list.innerHTML='';
@@ -862,14 +882,18 @@ function renderSaved(){
   nm.appendChild(elT('b',{},full));
   nm.appendChild(elT('small',{},[item.f.fonction,item.f.societe].filter(Boolean).join(' · ')||'—'));
   row.appendChild(nm);
-  var bEdit=el('button',{class:'icon-btn',type:'button',title:'Charger','aria-label':'Charger '+full},svgIcon('edit'));
+  var acts=el('div',{class:'saved-acts'});
+  var bEdit=el('button',{class:'icon-btn',type:'button','aria-label':'Modifier '+full},
+   svgIcon('edit')+'<span>Modifier</span>');
   bEdit.addEventListener('click',function(){state.f=JSON.parse(JSON.stringify(item.f));viewGenerateur();
-   window.scrollTo({top:0,behavior:'smooth'});toast('Fiche chargée');});
-  var bDel=el('button',{class:'icon-btn',type:'button',title:'Supprimer','aria-label':'Supprimer '+full},svgIcon('trash'));
+   window.scrollTo({top:0,behavior:'smooth'});toast('Fiche chargée — modifiez puis réenregistrez');});
+  var bDel=el('button',{class:'icon-btn danger',type:'button','aria-label':'Supprimer '+full},
+   svgIcon('trash')+'<span>Supprimer</span>');
   bDel.addEventListener('click',function(){
    if(!confirm('Supprimer « '+full+' » ?'))return;
    saveStore(loadStore().filter(function(x){return x.id!==item.id;}));renderSaved();toast('Fiche supprimée');});
-  row.appendChild(bEdit);row.appendChild(bDel);
+  acts.appendChild(bEdit);acts.appendChild(bDel);
+  row.appendChild(acts);
   list.appendChild(row);});}
 
 function ficheUrl(f){
