@@ -132,7 +132,7 @@ input:focus,textarea:focus,select:focus{
   border:1px solid var(--trait);
   max-width:420px;margin:0 auto;position:relative
 }
-.pass-band{background:var(--band);color:var(--blanc);padding:16px 22px 14px;position:relative}
+.pass-band{background:var(--band);color:var(--blanc);padding:13px 16px 12px;position:relative}
 .pass-band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--accent)}
 .pass-band .co{
   display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0
@@ -142,18 +142,19 @@ input:focus,textarea:focus,select:focus{
   text-transform:uppercase;opacity:.95;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap
 }
-.pass-band .tag{
-  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;
-  opacity:.7;margin-top:9px;text-transform:uppercase
+.pass-band .co-logo{
+  height:auto;max-height:34px;max-width:210px;width:auto;
+  object-fit:contain;display:block;flex:none
 }
+.pass-band .co-logo.blanc{filter:brightness(0) invert(1)}
 
-.pass-id{padding:22px 22px 4px;display:flex;gap:16px;align-items:flex-start}
+.pass-id{padding:16px 16px 2px;display:flex;gap:13px;align-items:flex-start}
 .avatar{
-  width:62px;height:62px;border-radius:50%;flex:none;object-fit:cover;
+  width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;
   background:var(--creme);border:2px solid var(--blanc);
   box-shadow:0 0 0 1px var(--trait);
   display:grid;place-items:center;
-  font-weight:800;font-size:21px;font-variation-settings:'wdth' 110,'wght' 800;
+  font-weight:800;font-size:18px;font-variation-settings:'wdth' 110,'wght' 800;
   color:var(--bordeaux);letter-spacing:.02em
 }
 .pass-id h2{
@@ -163,28 +164,24 @@ input:focus,textarea:focus,select:focus{
 }
 .pass-id h2 .given{display:block;font-variation-settings:'wdth' 116,'wght' 500;font-weight:500;color:var(--gris);font-size:.62em;letter-spacing:.04em}
 .pass-role{
-  margin:10px 0 0;font-size:14.5px;color:var(--encre);font-weight:500
-}
-.pass-base{
-  margin:6px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
-  letter-spacing:.06em;color:var(--gris)
+  margin:7px 0 0;font-size:14px;color:var(--encre);font-weight:500
 }
 .pass-tagline{
-  margin:16px 22px 0;padding:12px 14px;background:var(--creme);border-radius:10px;
-  font-size:13.5px;line-height:1.45;color:#4a4a5c;border-left:3px solid var(--accent)
+  margin:12px 16px 0;padding:10px 12px;background:var(--creme);border-radius:9px;
+  font-size:13px;line-height:1.4;color:#4a4a5c;border-left:3px solid var(--accent)
 }
 
-.rows{margin:18px 0 0;padding:0 12px}
+.rows{margin:10px 0 0;padding:0 8px}
 .row{
-  display:flex;align-items:center;gap:13px;padding:11px 10px;border-radius:11px;
+  display:flex;align-items:center;gap:11px;padding:8px 8px;border-radius:10px;
   text-decoration:none;transition:background .15s
 }
 .row:hover{background:var(--creme)}
 .row .ic{
-  width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;
+  width:30px;height:30px;border-radius:8px;flex:none;display:grid;place-items:center;
   background:var(--creme);color:var(--bordeaux)
 }
-.row .ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.row .ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .row .tx{min-width:0;flex:1}
 .row .k{
   font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.18em;
@@ -194,7 +191,7 @@ input:focus,textarea:focus,select:focus{
 .row .go{color:#c3c3cf;flex:none}
 .row .go svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-.perf{position:relative;height:26px;margin-top:10px}
+.perf{position:relative;height:18px;margin-top:6px}
 .perf::before,.perf::after{
   content:"";position:absolute;top:50%;transform:translateY(-50%);
   width:var(--notch);height:var(--notch);border-radius:50%;
@@ -206,13 +203,25 @@ input:focus,textarea:focus,select:focus{
   position:absolute;top:50%;left:16px;right:16px;height:0;
   border-top:2px dashed rgba(26,26,46,.2);display:block
 }
-.stub{padding:4px 22px 24px;text-align:center}
+.stub{padding:2px 16px 18px;text-align:center}
 .stub .qr{
-  width:150px;height:150px;margin:6px auto 12px;display:block;
+  width:140px;height:140px;margin:4px auto 10px;display:block;
   border-radius:10px;background:var(--blanc)
 }
 .stub .cap{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
-.stub .btn{margin-top:14px}
+.stub .btn{margin-top:10px}
+
+/* Fiches très fournies : un cran de compression supplémentaire. */
+.pass.dense .pass-id{padding:13px 16px 0}
+.pass.dense .avatar{width:46px;height:46px;font-size:16px}
+.pass.dense .pass-id h2{font-size:clamp(21px,5.6vw,26px)}
+.pass.dense .pass-role{margin-top:5px;font-size:13.5px}
+.pass.dense .pass-tagline{margin-top:9px;padding:8px 11px;font-size:12.5px}
+.pass.dense .rows{margin-top:6px}
+.pass.dense .row{padding:6px 8px}
+.pass.dense .row .ic{width:27px;height:27px}
+.pass.dense .row .v{font-size:14px}
+.pass.dense .stub .qr{width:118px;height:118px}
 
 /* ---------- vue fiche publique ---------- */
 body.fiche{background:var(--creme);display:block}
@@ -522,7 +531,8 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
   else out.push(enc.charCodeAt(i));}return out;}
 
 var CHAMPS=['prenom','nom','fonction','societe','mobile','fixe','email','site',
-            'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin'];
+            'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin',
+            'logo','logow'];
 var SEP='\u001f';
 function packer(f){
  var vals=CHAMPS.map(function(k){return(f[k]||'').replace(/\u001f/g,' ');});
@@ -563,7 +573,11 @@ function buildVCard(f){
  L.push('END:VCARD');
  return L.join('\r\n');}
 /* Une photo n'est acceptée qu'en https : évite les contenus mixtes et les URL exotiques. */
-function safeImg(u){u=String(u||'').trim();return /^https:\/\//i.test(u)?u:'';}
+function safeImg(u){u=String(u||'').trim();
+ if(/^https:\/\//i.test(u))return u;
+ /* fichier déposé dans le dépôt, à côté de index.html */
+ if(/^[\w][\w .\-]*\.(png|jpe?g|svg|webp)$/i.test(u))return u;
+ return'';}
 function normUrl(u){u=String(u||'').trim();
  if(!u)return'';
  return/^https?:\/\//i.test(u)?u:'https://'+u;}
@@ -623,9 +637,15 @@ function renderPass(f,opts){
  /* bandeau */
  var band=el('div',{class:'pass-band'});
  var co=el('div',{class:'co'});
- co.appendChild(elT('div',{class:'co-name'},f.societe||'Carte de visite'));
+ var logo=safeImg(f.logo);
+ if(logo){
+  var im=el('img',{class:'co-logo'+(f.logow==='0'?'':' blanc'),src:logo,alt:f.societe||''});
+  im.onerror=function(){ /* logo introuvable : on retombe sur le nom de la société */
+   var t=elT('div',{class:'co-name'},f.societe||'Carte de visite');
+   if(im.parentNode)im.parentNode.replaceChild(t,im);};
+  co.appendChild(im);}
+ else co.appendChild(elT('div',{class:'co-name'},f.societe||'Carte de visite'));
  band.appendChild(co);
- band.appendChild(elT('div',{class:'tag'},'Fiche contact'+(f.ville?' · '+f.ville:'')));
  wrap.appendChild(band);
 
  /* identité */
@@ -642,8 +662,6 @@ function renderPass(f,opts){
  h.appendChild(document.createTextNode(f.nom||(f.prenom?'':'Votre nom')));
  txt.appendChild(h);
  if(f.fonction)txt.appendChild(elT('p',{class:'pass-role'},f.fonction));
- var base=[f.ville,f.pays].filter(Boolean).join(', ');
- if(base)txt.appendChild(elT('p',{class:'pass-base'},base));
  id.appendChild(txt);
  wrap.appendChild(id);
 
@@ -670,6 +688,7 @@ function renderPass(f,opts){
  var adr=[f.adresse,f.ville,f.pays].filter(Boolean).join(', ');
  addRow('pin','Adresse',adr,adr?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(adr):null);
  if(rows.children.length)wrap.appendChild(rows);
+ if(rows.children.length>5||(rows.children.length>4&&f.baseline))wrap.classList.add('dense');
 
  /* talon */
  var perf=el('div',{class:'perf'});perf.appendChild(el('i'));
@@ -738,7 +757,10 @@ var STORE='cartes.v1';
 function loadStore(){try{return JSON.parse(localStorage.getItem(STORE)||'[]');}catch(e){return[];}}
 function saveStore(a){try{localStorage.setItem(STORE,JSON.stringify(a));}catch(e){toast('Enregistrement impossible');}}
 
-var state={f:{},mode:'lien',lastQr:null};
+/* Le logo livré avec l'application est proposé par défaut. */
+var DEFAUTS={logo:'logo-blanc.png'};
+function ficheVierge(){return JSON.parse(JSON.stringify(DEFAUTS));}
+var state={f:ficheVierge(),mode:'lien',lastQr:null};
 
 var GROUPES=[
  {n:1,t:'Identité',c:[
@@ -755,7 +777,8 @@ var GROUPES=[
   ['site','Site web','text','societe.com',1],
   ['linkedin','LinkedIn','text','linkedin.com/in/…',1],
   ['instagram','Instagram','text','instagram.com/…',1],
-  ['photo','Photo (URL)','text','https://…/photo.jpg',1]]},
+  ['photo','Photo (URL)','text','https://…/photo.jpg',1],
+  ['logo','Logo de la société','text','logo-blanc.png ou https://…',0]]},
  {n:4,t:'Localisation',c:[
   ['adresse','Adresse','text','20 Rue Jamaa Bin Ayad',0],
   ['ville','Ville','text','Asilah',1],
@@ -816,6 +839,16 @@ function viewGenerateur(){
  sel.addEventListener('change',function(){state.f.skin=sel.value;refresh();});
  lab2.appendChild(sel);
  b5.appendChild(lab2);
+ var lab3=el('label',{class:'f'});
+ lab3.style.marginTop='14px';
+ lab3.appendChild(el('span',{},'Couleur du logo'));
+ var sel2=el('select');
+ sel2.innerHTML='<option value="">Forcé en blanc</option><option value="0">Couleurs d\u2019origine</option>';
+ sel2.value=state.f.logow||'';
+ sel2.addEventListener('change',function(){state.f.logow=sel2.value;refresh();});
+ lab3.appendChild(sel2);
+ b5.appendChild(lab3);
+ b5.appendChild(el('p',{class:'hint'},'Le logo Afrijet Sahara (logo-blanc.png) est livr\u00e9 avec l\u2019application et propos\u00e9 par d\u00e9faut. Pour un autre logo\u00a0: d\u00e9posez le fichier \u00e0 c\u00f4t\u00e9 de index.html et saisissez son nom, ou collez une URL https. \u00ab Forc\u00e9 en blanc \u00bb transforme un logo de n\u2019importe quelle couleur en silhouette blanche, \u00e0 condition que le fond soit transparent.'));
  p5.appendChild(b5);
  colForm.appendChild(p5);
 
@@ -840,7 +873,7 @@ function viewGenerateur(){
   saveStore(arr.slice(0,40));renderSaved();toast('Fiche enregistrée sur cet appareil');});
  var bNew=el('button',{class:'btn btn-s',type:'button'},'Nouvelle fiche');
  bNew.addEventListener('click',function(){
-  state.f={};viewGenerateur();toast('Formulaire vidé');});
+  state.f=ficheVierge();viewGenerateur();toast('Formulaire vidé');});
  rowBtn.appendChild(bSave);rowBtn.appendChild(bNew);
  b6.appendChild(rowBtn);
  p6.appendChild(b6);
