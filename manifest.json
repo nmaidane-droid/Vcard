@@ -1,0 +1,19 @@
+{
+  "name": "Carte de visite numérique",
+  "short_name": "Ma carte",
+  "description": "Fiche de contact professionnelle accessible par QR code, avec enregistrement dans le répertoire.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F3EF",
+  "theme_color": "#8B0000",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
