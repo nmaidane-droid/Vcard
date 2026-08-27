@@ -251,12 +251,26 @@ body.fiche{background:var(--creme);display:block}
 .saved{display:grid;gap:8px}
 .saved-item{
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 13px;
-  border:1px solid var(--trait);border-radius:10px;background:var(--blanc)
+  border:1px solid var(--trait);border-left:3px solid transparent;border-radius:10px;
+  background:var(--blanc);transition:background .15s,border-left-color .15s
 }
-.saved-item .nm{flex:1 1 150px;min-width:0}
+.saved-item.on{border-left-color:var(--accent);background:#fffaf9}
+button.nm{
+  flex:1 1 150px;min-width:0;text-align:left;display:block;padding:2px 0;border-radius:6px
+}
+button.nm:hover b{text-decoration:underline}
+.saved-item .flag{
+  display:none;margin-left:8px;vertical-align:middle;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--bordeaux);
+  border:1px solid rgba(139,0,0,.3);border-radius:5px;padding:2px 6px
+}
+.saved-item.on .flag{display:inline-block}
 .saved-acts{display:flex;gap:7px;flex:none}
-.saved-item .nm b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.saved-item .nm small{color:var(--gris);font-size:12px}
+.saved-item .nm b{font-size:14px;font-weight:600}
+.saved-item .nm .line{display:flex;align-items:center;min-width:0}
+.saved-item .nm .line b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saved-item .nm small{display:block;color:var(--gris);font-size:12px;margin-top:1px}
 .icon-btn{
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
   min-height:40px;padding:8px 13px;border-radius:9px;
@@ -877,16 +891,21 @@ function renderSaved(){
  if(!arr.length){list.appendChild(el('p',{class:'empty'},'Aucune fiche enregistrée sur cet appareil.'));return;}
  arr.forEach(function(item){
   var row=el('div',{class:'saved-item'});
-  var nm=el('div',{class:'nm'});
   var full=((item.f.prenom||'')+' '+(item.f.nom||'')).trim()||'Sans nom';
-  nm.appendChild(elT('b',{},full));
+  row.setAttribute('data-cle',cleFiche(item.f));
+  /* Toute la ligne charge la fiche : c'est le geste naturel dans une liste. */
+  var nm=el('button',{class:'nm',type:'button','aria-label':'Charger '+full});
+  var line=el('div',{class:'line'});
+  line.appendChild(elT('b',{},full));
+  line.appendChild(elT('span',{class:'flag'},'chargée'));
+  nm.appendChild(line);
   nm.appendChild(elT('small',{},[item.f.fonction,item.f.societe].filter(Boolean).join(' · ')||'—'));
+  nm.addEventListener('click',function(){charger(item.f);});
   row.appendChild(nm);
   var acts=el('div',{class:'saved-acts'});
-  var bEdit=el('button',{class:'icon-btn',type:'button','aria-label':'Modifier '+full},
-   svgIcon('edit')+'<span>Modifier</span>');
-  bEdit.addEventListener('click',function(){state.f=JSON.parse(JSON.stringify(item.f));viewGenerateur();
-   window.scrollTo({top:0,behavior:'smooth'});toast('Fiche chargée — modifiez puis réenregistrez');});
+  var bEdit=el('button',{class:'icon-btn',type:'button','aria-label':'Charger '+full},
+   svgIcon('edit')+'<span>Charger</span>');
+  bEdit.addEventListener('click',function(){charger(item.f);});
   var bDel=el('button',{class:'icon-btn danger',type:'button','aria-label':'Supprimer '+full},
    svgIcon('trash')+'<span>Supprimer</span>');
   bDel.addEventListener('click',function(){
@@ -894,7 +913,21 @@ function renderSaved(){
    saveStore(loadStore().filter(function(x){return x.id!==item.id;}));renderSaved();toast('Fiche supprimée');});
   acts.appendChild(bEdit);acts.appendChild(bDel);
   row.appendChild(acts);
-  list.appendChild(row);});}
+  list.appendChild(row);});
+ marquerActive();}
+
+/* Charge une fiche enregistrée dans le formulaire. */
+function charger(f){
+ state.f=JSON.parse(JSON.stringify(f));
+ viewGenerateur();
+ window.scrollTo({top:0,behavior:'smooth'});
+ toast('Fiche chargée — modifiez puis réenregistrez');}
+
+/* Souligne la fiche actuellement dans le formulaire. */
+function marquerActive(){
+ var cle=cleFiche(state.f),vide=cle==='||';
+ $$('.saved-item').forEach(function(r){
+  r.classList.toggle('on',!vide&&r.getAttribute('data-cle')===cle);});}
 
 function ficheUrl(f){
  var base=location.origin+location.pathname;
@@ -906,6 +939,7 @@ function refresh(){
  var f=state.f;
  var prev=$('#prevBody');
  if(prev){prev.innerHTML='';prev.appendChild(renderPass(f,{withSave:false}));}
+ marquerActive();
  var box=$('#qrBox');if(!box)return;
  var hint=$('#modeHint');
  hint.textContent=state.mode==='lien'
