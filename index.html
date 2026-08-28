@@ -150,11 +150,15 @@ input:focus,textarea:focus,select:focus{
   color:var(--bordeaux);letter-spacing:.02em
 }
 .pass-id h2{
-  margin:0;overflow-wrap:anywhere;font-size:clamp(24px,6.4vw,30px);line-height:1.04;font-weight:800;
-  font-variation-settings:'wdth' 116,'wght' 800;letter-spacing:-.02em;
+  margin:0;white-space:nowrap;font-size:clamp(21px,5.6vw,26px);line-height:1.1;font-weight:800;
+  font-variation-settings:'wdth' 112,'wght' 800;letter-spacing:-.015em;
   text-transform:uppercase;word-break:break-word
 }
-.pass-id h2 .given{display:block;font-variation-settings:'wdth' 116,'wght' 500;font-weight:500;color:var(--gris);font-size:.62em;letter-spacing:.04em}
+/* Prénom et nom sur la même ligne, même corps : le contraste vient de la graisse. */
+.pass-id h2 .given{
+  font-variation-settings:'wdth' 112,'wght' 400;font-weight:400;
+  color:var(--gris);margin-right:.32em
+}
 .pass-role{
   margin:7px 0 0;font-size:14px;color:var(--encre);font-weight:500
 }
@@ -204,7 +208,7 @@ input:focus,textarea:focus,select:focus{
 /* Fiches très fournies : un cran de compression supplémentaire. */
 .pass.dense .pass-id{padding:13px 16px 0}
 .pass.dense .avatar{width:46px;height:46px;font-size:16px}
-.pass.dense .pass-id h2{font-size:clamp(21px,5.6vw,26px)}
+.pass.dense .pass-id h2{font-size:clamp(19px,5vw,23px)}
 .pass.dense .pass-role{margin-top:5px;font-size:13.5px}
 .pass.dense .pass-tagline{margin-top:9px;padding:8px 11px;font-size:12.5px}
 .pass.dense .rows{margin-top:6px}
@@ -226,7 +230,7 @@ body.fiche .pass{
 }
 body.fiche .pass .perf{margin-top:auto}
 body.fiche .pass-id{padding:20px 18px 2px}
-body.fiche .pass-id h2{font-size:clamp(27px,7.6vw,34px)}
+body.fiche .pass-id h2{font-size:clamp(23px,6.6vw,30px)}
 body.fiche .pass-role{font-size:15px}
 body.fiche .avatar{width:58px;height:58px;font-size:20px}
 body.fiche .rows{padding:0 10px}
@@ -562,6 +566,21 @@ function unpacker(code){
 /* ============================================================
    4. vCARD 3.0
    ============================================================ */
+/* Le nom tient sur une seule ligne quelle que soit sa longueur :
+   on mesure le texte rendu et on réduit le corps dans la même proportion. */
+function ajusterNoms(){
+ $$('.pass-id h2').forEach(function(h){
+  h.style.fontSize='';
+  var dispo=h.parentNode.clientWidth;
+  if(!dispo||!h.scrollWidth)return;
+  if(h.scrollWidth<=dispo)return;
+  var base=parseFloat(getComputedStyle(h).fontSize);
+  var cible=Math.max(13,base*dispo/h.scrollWidth);
+  h.style.fontSize=cible.toFixed(1)+'px';
+  if(h.scrollWidth>dispo)h.style.fontSize=Math.max(13,cible*dispo/h.scrollWidth).toFixed(1)+'px';});}
+window.addEventListener('resize',ajusterNoms);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ajusterNoms);
+
 function esc(v){return String(v||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');}
 function buildVCard(f){
  var L=[];
@@ -671,7 +690,7 @@ function renderPass(f,opts){
    if(av.parentNode)av.parentNode.replaceChild(d,av);};}
  else av=elT('div',{class:'avatar'},initials(f));
  id.appendChild(av);
- var txt=el('div',{style:'min-width:0;flex:1'});
+ var txt=el('div',{class:'pass-name',style:'min-width:0;flex:1'});
  var h=el('h2');
  if(f.prenom)h.appendChild(elT('span',{class:'given'},f.prenom));
  h.appendChild(document.createTextNode(f.nom||(f.prenom?'':'Votre nom')));
@@ -738,6 +757,7 @@ function viewFiche(f){
  var app=$('#app');app.innerHTML='';
  var w=el('div',{class:'fiche-wrap'});
  w.appendChild(renderPass(f,{withSave:true}));
+ setTimeout(ajusterNoms,0);
  var act=el('div',{class:'fiche-actions'});
  if(navigator.share){
   var s=el('button',{class:'btn btn-s btn-full',type:'button'},'Partager cette fiche');
@@ -973,7 +993,7 @@ function ficheUrl(f){
 function refresh(){
  var f=state.f;
  var prev=$('#prevBody');
- if(prev){prev.innerHTML='';prev.appendChild(renderPass(f,{withSave:false}));}
+ if(prev){prev.innerHTML='';prev.appendChild(renderPass(f,{withSave:false}));ajusterNoms();}
  marquerActive();
  var box=$('#qrBox');if(!box)return;
  var payload=ficheUrl(f);
