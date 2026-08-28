@@ -643,7 +643,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v33';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v34';   /* à incrémenter à chaque livraison, avec sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -852,25 +852,14 @@ function renderPass(f,opts){
   var nomFichier=(fullName.replace(/[^\w\u00C0-\u017F -]/g,'').trim()||'contact').replace(/\s+/g,'-')+'.vcf';
   function vcfBlob(){return new Blob([buildVCard(f)],{type:'text/vcard;charset=utf-8'});}
 
-  /* Voie principale — à l'essai. On demande au navigateur d'ouvrir le fichier
-     au lieu de le ranger : certains Android proposent alors Contacts directement,
-     d'autres affichent le texte brut. À confirmer sur plusieurs appareils. */
+  /* Le téléchargement est la seule voie fiable : Chrome bloque l'ouverture
+     directe d'un fichier blob dans un onglet, essayé et écarté en v33.
+     La consigne sous le bouton évite qu'on reste bloqué après l'appui. */
   var b=el('button',{class:'btn btn-p btn-full',type:'button'},'Ajouter à mes contacts');
   b.addEventListener('click',function(){
-   var u=URL.createObjectURL(vcfBlob());
-   var onglet=window.open(u,'_blank');
-   if(!onglet)location.href=u;   /* fenêtre bloquée : on ouvre sur place */
-   setTimeout(function(){URL.revokeObjectURL(u);},60000);
-   retourBouton(b,'Ouverture\u2026',2000);});
-  stub.appendChild(b);
-
-  /* Voie de secours — fonctionne partout, mais en deux temps. */
-  var b2=el('button',{class:'btn btn-s btn-full',type:'button'},'Télécharger le fichier contact');
-  b2.style.marginTop='8px';
-  b2.addEventListener('click',function(){
    download(vcfBlob(),nomFichier);
-   retourBouton(b2,'Fichier t\u00e9l\u00e9charg\u00e9 \u2713',2400);});
-  stub.appendChild(b2);
+   retourBouton(b,'Fichier t\u00e9l\u00e9charg\u00e9 \u2713',2400);});
+  stub.appendChild(b);
 
   stub.appendChild(elT('p',{class:'aide'},
    'Ouvrez ensuite le fichier depuis vos t\u00e9l\u00e9chargements pour l\u2019enregistrer.'));}
