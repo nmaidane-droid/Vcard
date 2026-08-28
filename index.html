@@ -323,6 +323,28 @@ body.qrview{background:var(--blanc)}
 .qr-plate{padding:0;line-height:0;border-radius:10px;background:var(--blanc)}
 .qr-plate canvas{display:block;image-rendering:pixelated;border-radius:4px}
 
+
+/* ---------- pastille d'installation ---------- */
+.install{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(14px + env(safe-area-inset-bottom));z-index:45;
+  display:none;align-items:center;gap:8px;
+  padding:10px 16px;border-radius:999px;
+  background:var(--bordeaux);color:var(--blanc);
+  font-size:13px;font-weight:600;
+  box-shadow:0 6px 20px -8px rgba(139,0,0,.7);
+  max-width:calc(100vw - 32px)
+}
+.install.on{display:inline-flex}
+.install svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.install.note{
+  background:var(--blanc);color:var(--encre);border:1px solid var(--trait);
+  font-weight:500;font-size:12.5px;text-align:center;display:none;
+  line-height:1.45;padding:11px 15px;border-radius:12px;box-shadow:0 6px 20px -10px rgba(26,26,46,.4)
+}
+.install.note.on{display:block}
+.install.note b{display:block;font-weight:600;margin-bottom:2px}
+
 /* ---------- toast ---------- */
 .toast{
   position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));
@@ -351,6 +373,7 @@ body.qrview{background:var(--blanc)}
 <body>
 <div id="app"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<button class="install" id="install" type="button" hidden></button>
 <button class="jump" id="jump" type="button" hidden>Mon QR code
 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v11M5.5 10.5L10 15l4.5-4.5"/></svg></button>
 
@@ -767,6 +790,7 @@ function renderPass(f,opts){
 function viewFiche(f){
  document.body.className='fiche';
  $('#jump').hidden=true;
+ vueInstall='fiche';majInstall();
  var fullName=((f.prenom||'')+' '+(f.nom||'')).trim();
  document.title=fullName?fullName+(f.societe?' · '+f.societe:''):'Fiche contact';
  var app=$('#app');app.innerHTML='';
@@ -794,6 +818,45 @@ function viewFiche(f){
  foot.appendChild(fl);
  w.appendChild(foot);
  app.appendChild(w);}
+
+/* ============================================================
+   INSTALLATION SUR L'ÉCRAN D'ACCUEIL
+   Chrome n'expose son menu que dans un onglet ordinaire. Depuis une
+   fenêtre d'application déjà installée, il faut passer par le navigateur.
+   ============================================================ */
+var promptInstall=null,vueInstall='app';
+window.addEventListener('beforeinstallprompt',function(e){
+ e.preventDefault();promptInstall=e;majInstall();});
+window.addEventListener('appinstalled',function(){
+ promptInstall=null;majInstall();toast('Raccourci ajout\u00e9 \u00e0 l\u2019\u00e9cran d\u2019accueil');});
+
+function enApplication(){
+ return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
+
+function majInstall(){
+ var b=$('#install');if(!b)return;
+ b.className='install';b.hidden=true;b.onclick=null;b.textContent='';
+ /* La fiche publique appartient au visiteur : aucune proposition d'installation. */
+ if(vueInstall==='fiche'){if(redessinerQR)redessinerQR();return;}
+ var libelle=vueInstall==='qr'?'Ajouter mon QR \u00e0 l\u2019\u00e9cran d\u2019accueil'
+                             :'Ajouter le g\u00e9n\u00e9rateur \u00e0 l\u2019\u00e9cran d\u2019accueil';
+ if(promptInstall){
+  b.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M5.5 8.5L10 13l4.5-4.5M4 16.5h12"/></svg>';
+  b.appendChild(elT('span',{},libelle));
+  b.hidden=false;b.classList.add('on');
+  b.onclick=function(){
+   var p=promptInstall;promptInstall=null;majInstall();
+   p.prompt();p.userChoice.catch(function(){});};
+  if(redessinerQR)setTimeout(redessinerQR,0);
+  return;}
+ /* Fenêtre d'application : l'installation est impossible ici. */
+ if(enApplication()&&vueInstall==='qr'){
+  b.className='install note on';b.hidden=false;
+  b.appendChild(elT('b',{},'Pour cr\u00e9er le raccourci'));
+  b.appendChild(elT('span',{},'Ouvrez cette adresse dans Chrome. Appuyez ici pour la copier.'));
+  b.onclick=function(){
+   copyText(location.origin+location.pathname+'?v=qr','Adresse copi\u00e9e');};}
+ if(redessinerQR)setTimeout(redessinerQR,0);}
 
 /* Retour visible : sur téléphone, un simple toast passe inaperçu. */
 function retourBouton(btn,texte,ms){
@@ -846,6 +909,7 @@ function urlPleinEcran(code){return location.pathname+'?v=qr#qr='+code;}
 function viewQRVide(){
  document.body.className='';
  var jp=$('#jump');if(jp)jp.hidden=true;
+ vueInstall='qr';majInstall();
  document.title='Mon QR code';
  var app=$('#app');app.innerHTML='';
  var w=el('div',{class:'wrap',style:'padding-top:64px;max-width:440px;text-align:center'});
@@ -861,6 +925,7 @@ function viewQRVide(){
 function viewQR(code,f){
  document.body.className='qrview';
  var jp=$('#jump');if(jp)jp.hidden=true;
+ vueInstall='qr';majInstall();
  document.title='QR code';
  var app=$('#app');app.innerHTML='';
 
@@ -880,7 +945,9 @@ function viewQR(code,f){
  /* Le côté du QR est un multiple entier du module : sinon les pixels bavent au scan. */
  redessinerQR=function(){
   var n=qr.size+8;
-  var dispo=Math.min(window.innerWidth-16,window.innerHeight-32);
+  var bi=$('#install');
+  var reserve=(bi&&!bi.hidden)?bi.offsetHeight+26:0;
+  var dispo=Math.min(window.innerWidth-16,window.innerHeight-32-reserve);
   var cote=Math.max(n*2,Math.floor(dispo/n)*n);
   var dpr=Math.min(3,window.devicePixelRatio||1);
   qrToCanvas(qr,cv,Math.max(2,Math.round(cote*dpr/n)),4);
@@ -1045,6 +1112,7 @@ function viewGenerateur(){
  grid.appendChild(colForm);grid.appendChild(colPrev);
  wrap.appendChild(grid);
  app.appendChild(wrap);
+ vueInstall='app';majInstall();
  var jump=$('#jump');
  jump.hidden=false;
  jump.onclick=function(){
