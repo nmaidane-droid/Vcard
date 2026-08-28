@@ -1,0 +1,10 @@
+Dossier des photos de fiches.
+
+Déposez ici les fichiers produits par le bouton « Enregistrer la photo »
+du générateur (section 3, Présence en ligne).
+
+Le générateur les nomme automatiquement d'après la personne,
+par exemple : noureddine-maidane.jpg
+
+Format produit : JPEG carré 256 x 256 px, environ 12 Ko.
+La photo n'est jamais incluse dans le QR code : seul son chemin y figure.
