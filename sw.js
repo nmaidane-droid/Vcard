@@ -1,13 +1,15 @@
 /* Service worker — Carte de visite numérique
    RÈGLE : incrémenter VERSION à chaque modification de index.html. */
-const VERSION = 'carte-v25';
+const VERSION = 'carte-v28';
 const SHELL = ['./', './?v=qr', './index.html', './manifest.json',
   './icon.svg', './icon.png', './logo-blanc.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(VERSION)
-      .then(c => c.addAll(SHELL))
+      // addAll rejette en bloc si un seul fichier manque : on met en cache
+      // fichier par fichier pour qu'un absent ne bloque pas l'installation.
+      .then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => null))))
       .then(() => self.skipWaiting())
   );
 });

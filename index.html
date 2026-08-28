@@ -637,7 +637,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v27';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v28';   /* à incrémenter à chaque livraison, avec sw.js */
 var LOGO_DEFAUT='logo-blanc.png';
 var CHAMPS=['prenom','nom','fonction','societe','mobile','fixe','email','site',
             'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin',
@@ -991,6 +991,21 @@ function memoriserQR(code){try{localStorage.setItem(CLE_QR,code);}catch(e){}}
    et n'en change plus. Sans ce garde-fou, préparer la fiche d'un collaborateur
    écrasait la sienne — le raccourci affichait alors la mauvaise carte. */
 function memoriserSiVierge(code){if(!qrMemorise())memoriserQR(code);}
+
+/* Le code contient toute la fiche : la moindre correction le change, et le
+   raccourci resterait sur l'ancienne version. On le suit donc automatiquement,
+   mais seulement s'il s'agit de la même personne — travailler sur la fiche
+   d'un collaborateur ne doit jamais déplacer le raccourci. */
+function suivreSiMemePersonne(f){
+ var actuel=qrMemorise();
+ if(!actuel)return false;
+ var ancienne=unpacker(actuel);
+ if(!ancienne)return false;
+ if(cleFiche(ancienne)!==cleFiche(f))return false;
+ var code=packer(f);
+ if(code===actuel)return false;
+ memoriserQR(code);
+ return true;}
 function qrMemorise(){try{return localStorage.getItem(CLE_QR)||'';}catch(e){return'';}}
 function urlPleinEcran(code){return location.pathname+'?v=qr#qr='+code;}
 /* Aperçu depuis le générateur : on n'écrit rien en mémoire. */
@@ -1031,7 +1046,9 @@ function viewQR(code,f){
 
  app.appendChild(w);
 
- if(!estApercu())memoriserSiVierge(code);
+ if(!estApercu()){
+  if(!qrMemorise())memoriserQR(code);
+  else{var f0=unpacker(code);if(f0)suivreSiMemePersonne(f0);}}
  var qr=QRCodec.encode(lienDe(code),'M');
  if(!qr){toast('QR illisible');return;}
 
@@ -1288,7 +1305,9 @@ function viewGenerateur(){
   /* Même personne, même société : on met à jour la fiche au lieu d'en empiler une de plus. */
   var i=arr.findIndex(function(x){return cleFiche(x.f)===cleFiche(f);});
   if(i>=0){arr.splice(i,1);arr.unshift({id:Date.now(),f:copie});
-   saveStore(arr.slice(0,40));renderSaved();toast('Fiche mise à jour');return;}
+   saveStore(arr.slice(0,40));renderSaved();
+   var suivi=suivreSiMemePersonne(f);refresh();
+   toast(suivi?'Fiche mise \u00e0 jour \u2014 raccourci actualis\u00e9':'Fiche mise \u00e0 jour');return;}
   arr.unshift({id:Date.now(),f:copie});
   saveStore(arr.slice(0,40));renderSaved();toast('Fiche enregistrée sur cet appareil');});
  var bNew=el('button',{class:'btn btn-s',type:'button'},'Nouvelle fiche');
