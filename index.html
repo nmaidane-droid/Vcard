@@ -344,6 +344,10 @@ body.qrview{background:var(--blanc)}
 }
 .install.note.on{display:block}
 .install.note b{display:block;font-weight:600;margin-bottom:2px}
+.install.note .fermer{
+  display:block;margin-top:6px;font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#a5a5b4
+}
 
 /* ---------- toast ---------- */
 .toast{
@@ -363,9 +367,11 @@ body.qrview{background:var(--blanc)}
 }
 .jump svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:959px){
-  body:not(.fiche) .jump{display:inline-flex}
+  body:not(.fiche):not(.qrview) .jump{display:inline-flex}
   .toast{bottom:calc(76px + env(safe-area-inset-bottom))}
 }
+/* hidden doit toujours l'emporter sur les display ci-dessus */
+.jump[hidden],.install[hidden]{display:none!important}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -828,7 +834,7 @@ var promptInstall=null,vueInstall='app';
 window.addEventListener('beforeinstallprompt',function(e){
  e.preventDefault();promptInstall=e;majInstall();});
 window.addEventListener('appinstalled',function(){
- promptInstall=null;majInstall();toast('Raccourci ajout\u00e9 \u00e0 l\u2019\u00e9cran d\u2019accueil');});
+ promptInstall=null;masquerNote();majInstall();toast('Raccourci ajout\u00e9 \u00e0 l\u2019\u00e9cran d\u2019accueil');});
 
 function enApplication(){
  return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
@@ -849,14 +855,21 @@ function majInstall(){
    p.prompt();p.userChoice.catch(function(){});};
   if(redessinerQR)setTimeout(redessinerQR,0);
   return;}
- /* Fenêtre d'application : l'installation est impossible ici. */
- if(enApplication()&&vueInstall==='qr'){
+ /* Aucun événement d'installation : onglet restreint, application déjà ouverte,
+    ou navigateur qui ne le propose pas (Safari). On explique la marche à suivre. */
+ if(vueInstall==='qr'&&!noteMasquee()){
   b.className='install note on';b.hidden=false;
-  b.appendChild(elT('b',{},'Pour cr\u00e9er le raccourci'));
-  b.appendChild(elT('span',{},'Ouvrez cette adresse dans Chrome. Appuyez ici pour la copier.'));
-  b.onclick=function(){
-   copyText(location.origin+location.pathname+'?v=qr','Adresse copi\u00e9e');};}
+  b.appendChild(elT('b',{},'Cr\u00e9er le raccourci'));
+  b.appendChild(elT('span',{},enApplication()
+   ? 'Ouvrez cette page dans Chrome, puis menu \u22ee \u2192 Ajouter \u00e0 l\u2019\u00e9cran d\u2019accueil.'
+   : 'Menu \u22ee \u2192 Ouvrir dans le navigateur, puis menu \u22ee \u2192 Ajouter \u00e0 l\u2019\u00e9cran d\u2019accueil.'));
+  b.appendChild(elT('span',{class:'fermer'},'Appuyez pour masquer'));
+  b.onclick=function(){masquerNote();majInstall();};}
  if(redessinerQR)setTimeout(redessinerQR,0);}
+
+var CLE_NOTE='carte.noteInstall';
+function noteMasquee(){try{return localStorage.getItem(CLE_NOTE)==='0';}catch(e){return false;}}
+function masquerNote(){try{localStorage.setItem(CLE_NOTE,'0');}catch(e){}}
 
 /* Retour visible : sur téléphone, un simple toast passe inaperçu. */
 function retourBouton(btn,texte,ms){
