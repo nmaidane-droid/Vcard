@@ -114,14 +114,6 @@ input:focus,textarea:focus,select:focus{
 .btn-full{width:100%}
 .btn-row{display:flex;flex-wrap:wrap;gap:10px}
 
-/* ---------- segmenté ---------- */
-.seg{display:flex;gap:4px;padding:4px;background:var(--creme);border-radius:11px}
-.seg button{
-  flex:1;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;
-  color:var(--gris);transition:background .15s,color .15s
-}
-.seg button[aria-selected="true"]{background:var(--blanc);color:var(--encre);box-shadow:0 1px 3px rgba(0,0,0,.09)}
-
 /* ==========================================================
    LA CARTE — coupon de vol
    ========================================================== */
@@ -182,12 +174,10 @@ input:focus,textarea:focus,select:focus{
   background:var(--creme);color:var(--bordeaux)
 }
 .row .ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.row .tx{min-width:0;flex:1}
-.row .k{
-  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--gris);display:block
+.row .v{
+  min-width:0;flex:1;font-size:15px;font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
-.row .v{font-size:14.5px;font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
 .row .go{color:#c3c3cf;flex:none}
 .row .go svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
@@ -220,16 +210,38 @@ input:focus,textarea:focus,select:focus{
 .pass.dense .rows{margin-top:6px}
 .pass.dense .row{padding:6px 8px}
 .pass.dense .row .ic{width:27px;height:27px}
-.pass.dense .row .v{font-size:14px}
+.pass.dense .row .v{font-size:14.5px}
 .pass.dense .stub .qr{width:118px;height:118px}
 
 /* ---------- vue fiche publique ---------- */
 body.fiche{background:var(--creme);display:block}
 .fiche-wrap{
-  min-height:100dvh;padding:max(20px,env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;justify-content:center;gap:18px
+  min-height:100dvh;padding:max(10px,env(safe-area-inset-top)) 10px calc(16px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:12px
 }
-.fiche-actions{max-width:420px;margin:0 auto;width:100%;display:grid;gap:10px}
+/* Plein écran : la carte occupe toute la place, le talon reste calé en bas. */
+body.fiche .pass{
+  max-width:100%;width:100%;flex:1 1 auto;
+  display:flex;flex-direction:column
+}
+body.fiche .pass .perf{margin-top:auto}
+body.fiche .pass-id{padding:20px 18px 2px}
+body.fiche .pass-id h2{font-size:clamp(27px,7.6vw,34px)}
+body.fiche .pass-role{font-size:15px}
+body.fiche .avatar{width:58px;height:58px;font-size:20px}
+body.fiche .rows{padding:0 10px}
+body.fiche .row{padding:10px 9px}
+body.fiche .row .ic{width:34px;height:34px}
+body.fiche .row .ic svg{width:18px;height:18px}
+body.fiche .row .v{font-size:16px}
+body.fiche .pass-tagline{font-size:13.5px;padding:11px 13px;margin:14px 18px 0}
+body.fiche .stub{padding:2px 18px 20px}
+body.fiche .stub .btn{padding:15px 18px;font-size:15.5px;margin-top:12px}
+@media(min-width:600px){
+  body.fiche .pass{max-width:420px;margin:0 auto;flex:0 1 auto}
+  .fiche-wrap{justify-content:center;padding-top:24px}
+}
+.fiche-actions{max-width:min(420px,100%);margin:0 auto;width:100%;display:grid;gap:10px}
 .fiche-foot{
   text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;
   letter-spacing:.16em;text-transform:uppercase;color:#a5a5b4
@@ -530,6 +542,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
+var LOGO_DEFAUT='logo-blanc.png';
 var CHAMPS=['prenom','nom','fonction','societe','mobile','fixe','email','site',
             'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin',
             'logo','logow'];
@@ -637,7 +650,9 @@ function renderPass(f,opts){
  /* bandeau */
  var band=el('div',{class:'pass-band'});
  var co=el('div',{class:'co'});
- var logo=safeImg(f.logo);
+ /* Champ vide : on utilise le logo livré avec l'application, ce qui fait
+    apparaître le logo même sur les liens créés avant son ajout. */
+ var logo=f.logow==='n'?'':(safeImg(f.logo)||LOGO_DEFAUT);
  if(logo){
   var im=el('img',{class:'co-logo'+(f.logow==='0'?'':' blanc'),src:logo,alt:f.societe||''});
   im.onerror=function(){ /* logo introuvable : on retombe sur le nom de la société */
@@ -669,12 +684,12 @@ function renderPass(f,opts){
 
  /* coordonnées */
  var rows=el('div',{class:'rows'});
+ /* L'icône porte le sens : le libellé reste en aria-label pour les lecteurs d'écran. */
  function addRow(icon,k,v,href){
   if(!v)return;
-  var a=el(href?'a':'div',{class:'row'});
+  var a=el(href?'a':'div',{class:'row','aria-label':k+' : '+v});
   if(href){a.href=href;if(/^https?:/.test(href)){a.target='_blank';a.rel='noopener';}}
-  a.innerHTML='<span class="ic">'+svgIcon(icon)+'</span>'+
-   '<span class="tx"><span class="k">'+k+'</span><span class="v"></span></span>'+
+  a.innerHTML='<span class="ic">'+svgIcon(icon)+'</span><span class="v"></span>'+
    (href?'<span class="go">'+svgIcon('go')+'</span>':'');
   $('.v',a).textContent=v;
   rows.appendChild(a);}
@@ -757,10 +772,8 @@ var STORE='cartes.v1';
 function loadStore(){try{return JSON.parse(localStorage.getItem(STORE)||'[]');}catch(e){return[];}}
 function saveStore(a){try{localStorage.setItem(STORE,JSON.stringify(a));}catch(e){toast('Enregistrement impossible');}}
 
-/* Le logo livré avec l'application est proposé par défaut. */
-var DEFAUTS={logo:'logo-blanc.png'};
-function ficheVierge(){return JSON.parse(JSON.stringify(DEFAUTS));}
-var state={f:ficheVierge(),mode:'lien',lastQr:null};
+function ficheVierge(){return{};}
+var state={f:ficheVierge(),lastQr:null};
 
 var GROUPES=[
  {n:1,t:'Identité',c:[
@@ -843,12 +856,12 @@ function viewGenerateur(){
  lab3.style.marginTop='14px';
  lab3.appendChild(el('span',{},'Couleur du logo'));
  var sel2=el('select');
- sel2.innerHTML='<option value="">Forcé en blanc</option><option value="0">Couleurs d\u2019origine</option>';
+ sel2.innerHTML='<option value="">Forcé en blanc</option><option value="0">Couleurs d\u2019origine</option><option value="n">Sans logo</option>';
  sel2.value=state.f.logow||'';
  sel2.addEventListener('change',function(){state.f.logow=sel2.value;refresh();});
  lab3.appendChild(sel2);
  b5.appendChild(lab3);
- b5.appendChild(el('p',{class:'hint'},'Le logo Afrijet Sahara (logo-blanc.png) est livr\u00e9 avec l\u2019application et propos\u00e9 par d\u00e9faut. Pour un autre logo\u00a0: d\u00e9posez le fichier \u00e0 c\u00f4t\u00e9 de index.html et saisissez son nom, ou collez une URL https. \u00ab Forc\u00e9 en blanc \u00bb transforme un logo de n\u2019importe quelle couleur en silhouette blanche, \u00e0 condition que le fond soit transparent.'));
+ b5.appendChild(el('p',{class:'hint'},'Champ vide\u00a0: le logo Afrijet Sahara livr\u00e9 avec l\u2019application s\u2019affiche. Pour un autre logo, d\u00e9posez le fichier \u00e0 c\u00f4t\u00e9 de index.html et saisissez son nom, ou collez une URL https. Pour n\u2019en afficher aucun, choisissez \u00ab\u00a0Sans logo\u00a0\u00bb ci-dessous.'));
  p5.appendChild(b5);
  colForm.appendChild(p5);
 
@@ -890,16 +903,7 @@ function viewGenerateur(){
  var qrPanel=el('section',{class:'panel'});
  qrPanel.appendChild(el('div',{class:'panel-h'},'<span class="n">◆</span><h2>QR code</h2>'));
  var qrBody=el('div',{class:'panel-b'});
- var seg=el('div',{class:'seg',role:'tablist'});
- seg.innerHTML='<button role="tab" data-m="lien">Lien vers la fiche</button>'+
-               '<button role="tab" data-m="vcard">vCard directe</button>';
- $$('button',seg).forEach(function(b){
-  b.setAttribute('aria-selected',b.dataset.m===state.mode?'true':'false');
-  b.addEventListener('click',function(){state.mode=b.dataset.m;
-   $$('button',seg).forEach(function(x){x.setAttribute('aria-selected',x.dataset.m===state.mode?'true':'false');});
-   refresh();});});
- qrBody.appendChild(seg);
- qrBody.appendChild(el('p',{class:'hint',id:'modeHint'},''));
+ qrBody.appendChild(el('p',{class:'hint'},'Le scan ouvre votre fiche compl\u00e8te, avec le bouton d\u2019enregistrement dans le r\u00e9pertoire.'));
  var box=el('div',{class:'qr-box',id:'qrBox'});
  qrBody.appendChild(box);
  qrPanel.appendChild(qrBody);
@@ -965,8 +969,6 @@ function marquerActive(){
 function ficheUrl(f){
  var base=location.origin+location.pathname;
  return base+'#c='+packer(f);}
-function qrPayload(f){
- return state.mode==='vcard'?buildVCard(f):ficheUrl(f);}
 
 function refresh(){
  var f=state.f;
@@ -974,12 +976,7 @@ function refresh(){
  if(prev){prev.innerHTML='';prev.appendChild(renderPass(f,{withSave:false}));}
  marquerActive();
  var box=$('#qrBox');if(!box)return;
- var hint=$('#modeHint');
- hint.textContent=state.mode==='lien'
-  ? 'Ouvre la fiche complète en ligne, avec le bouton d\u2019enregistrement. À privilégier.'
-  : 'Propose directement l\u2019ajout au répertoire, sans page web. Fonctionne hors connexion, mais sans mise en forme.';
-
- var payload=qrPayload(f);
+ var payload=ficheUrl(f);
  var ecl=payload.length>900?'L':(payload.length>400?'M':'Q');
  var qr=QRCodec.encode(payload,ecl);
  box.innerHTML='';
@@ -1014,25 +1011,17 @@ function refresh(){
   toast('SVG téléchargé — idéal pour l\u2019impression');});
  actions.appendChild(b1);actions.appendChild(b2);
 
- if(state.mode==='lien'){
-  var b3=el('button',{class:'btn btn-s',type:'button'},'Ouvrir la fiche');
-  b3.addEventListener('click',function(){window.open(ficheUrl(f),'_blank','noopener');});
-  actions.appendChild(b3);}
- else{
-  var b4=el('button',{class:'btn btn-s',type:'button'},'Tester la vCard');
-  b4.addEventListener('click',function(){
-   download(new Blob([buildVCard(f)],{type:'text/vcard;charset=utf-8'}),fileBase(f)+'.vcf');
-   toast('vCard téléchargée');});
-  actions.appendChild(b4);}
+ var b3=el('button',{class:'btn btn-s',type:'button'},'Ouvrir la fiche');
+ b3.addEventListener('click',function(){window.open(ficheUrl(f),'_blank','noopener');});
+ actions.appendChild(b3);
  box.appendChild(actions);
 
- if(state.mode==='lien'){
-  var lb=el('div',{class:'link-box'});
-  var sp=el('span');sp.textContent=ficheUrl(f);
-  var cb=el('button',{class:'icon-btn',type:'button','aria-label':'Copier le lien'},svgIcon('copy'));
-  cb.addEventListener('click',function(){copyText(ficheUrl(f),'Lien copié');});
-  lb.appendChild(sp);lb.appendChild(cb);
-  box.appendChild(lb);}}
+ var lb=el('div',{class:'link-box'});
+ var sp=el('span');sp.textContent=ficheUrl(f);
+ var cb=el('button',{class:'icon-btn bare',type:'button','aria-label':'Copier le lien'},svgIcon('copy'));
+ cb.addEventListener('click',function(){copyText(ficheUrl(f),'Lien copié');});
+ lb.appendChild(sp);lb.appendChild(cb);
+ box.appendChild(lb);}
 
 function fileBase(f){
  var s=(f.prenom||'')+'-'+(f.nom||'');
