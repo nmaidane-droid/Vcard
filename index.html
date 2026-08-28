@@ -169,7 +169,8 @@ input:focus,textarea:focus,select:focus{
   color:var(--gris);margin-right:.3em
 }
 .pass-role{
-  margin:7px 0 0;font-size:14px;color:var(--encre);font-weight:500
+  margin:7px 0 0;font-size:14px;color:var(--encre);font-weight:500;
+  white-space:nowrap;overflow:hidden
 }
 .pass-tagline{
   margin:12px 16px 0;padding:10px 12px;background:var(--creme);border-radius:9px;
@@ -602,7 +603,9 @@ function qrToCanvas(qr,canvas,scale,quiet){
  var n=qr.size+quiet*2,ctx=canvas.getContext('2d');
  canvas.width=n*scale;canvas.height=n*scale;
  ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,canvas.width,canvas.height);
- ctx.fillStyle='#1a1a2e';
+ /* Noir absolu : le bleu très foncé coûtait de la marge de détection
+    aux capteurs anciens. Choix technique, pas esthétique. */
+ ctx.fillStyle='#000000';
  for(var y=0;y<qr.size;y++)for(var x=0;x<qr.size;x++)
   if(qr.modules[y][x])ctx.fillRect((x+quiet)*scale,(y+quiet)*scale,scale,scale);
  return canvas;}
@@ -614,7 +617,7 @@ function qrToSvg(qr,quiet){
  return'<?xml version="1.0" encoding="UTF-8"?>\n'+
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+n+' '+n+'" shape-rendering="crispEdges">'+
   '<rect width="'+n+'" height="'+n+'" fill="#FFFFFF"/>'+
-  '<path d="'+d.join('')+'" fill="#1a1a2e"/></svg>';}
+  '<path d="'+d.join('')+'" fill="#000000"/></svg>';}
 
 /* ============================================================
    3. ENCODAGE DE LA FICHE DANS L'URL (base32 = QR plus dense)
@@ -637,7 +640,11 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v29';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v31';   /* à incrémenter à chaque livraison, avec sw.js */
+/* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
+   le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
+   Pour un capteur ancien, la taille du module prime sur la redondance. */
+function niveauQR(texte){return texte.length>1500?'L':'M';}
 var LOGO_DEFAUT='logo-blanc.png';
 var CHAMPS=['prenom','nom','fonction','societe','mobile','fixe','email','site',
             'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin',
@@ -660,16 +667,22 @@ function unpacker(code){
    ============================================================ */
 /* Le nom tient sur une seule ligne quelle que soit sa longueur :
    on mesure le texte rendu et on réduit le corps dans la même proportion. */
-function ajusterNoms(){
- $$('.pass-id h2').forEach(function(h){
+function ajusterUneLigne(sel,plancher){
+ $$(sel).forEach(function(h){
   h.style.fontSize='';
   var dispo=h.parentNode.clientWidth;
   if(!dispo||!h.scrollWidth)return;
   if(h.scrollWidth<=dispo)return;
   var base=parseFloat(getComputedStyle(h).fontSize);
-  var cible=Math.max(13,base*dispo/h.scrollWidth);
+  var cible=Math.max(plancher,base*dispo/h.scrollWidth);
   h.style.fontSize=cible.toFixed(1)+'px';
-  if(h.scrollWidth>dispo)h.style.fontSize=Math.max(13,cible*dispo/h.scrollWidth).toFixed(1)+'px';});}
+  if(h.scrollWidth>dispo)
+   h.style.fontSize=Math.max(plancher,cible*dispo/h.scrollWidth).toFixed(1)+'px';});}
+function ajusterNoms(){
+ ajusterUneLigne('.pass-id h2',13);
+ /* La fonction tient elle aussi sur une seule ligne : elle peut être longue
+    (« Directeur des opérations aériennes ») et passait à la ligne. */
+ ajusterUneLigne('.pass-role',10.5);}
 window.addEventListener('resize',ajusterNoms);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ajusterNoms);
 
@@ -827,7 +840,7 @@ function renderPass(f,opts){
  var stub=el('div',{class:'stub'});
  if(opts.qrText){
   var cv=el('canvas',{class:'qr','aria-label':'QR code de la fiche'});
-  var q=QRCodec.encode(opts.qrText,opts.qrText.length>900?'L':'M');
+  var q=QRCodec.encode(opts.qrText,niveauQR(opts.qrText));
   if(q)qrToCanvas(q,cv,6,3);
   stub.appendChild(cv);
   stub.appendChild(el('div',{class:'cap'},opts.qrCaption||'Scannez pour ouvrir la fiche'));
@@ -1030,7 +1043,7 @@ function viewQR(code,f){
  if(!estApercu()){
   if(!qrMemorise())memoriserQR(code);
   else{var f0=unpacker(code);if(f0)suivreSiMemePersonne(f0);}}
- var qr=QRCodec.encode(lienDe(code),'M');
+ var qr=QRCodec.encode(lienDe(code),niveauQR(lienDe(code)));
  if(!qr){toast('QR illisible');return;}
 
  /* Le côté du QR est un multiple entier du module : sinon les pixels bavent au scan. */
@@ -1386,8 +1399,7 @@ function refresh(){
  marquerActive();
  var box=$('#qrBox');if(!box)return;
  var payload=ficheUrl(f);
- var ecl=payload.length>900?'L':(payload.length>400?'M':'Q');
- var qr=QRCodec.encode(payload,ecl);
+ var qr=QRCodec.encode(payload,niveauQR(payload));
  box.innerHTML='';
  if(!qr){box.appendChild(el('p',{class:'warn'},'Fiche trop longue pour un QR code. Raccourcissez l\u2019accroche ou l\u2019URL de la photo.'));return;}
  state.lastQr={qr:qr,payload:payload};
