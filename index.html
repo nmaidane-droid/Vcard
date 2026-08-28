@@ -201,23 +201,16 @@ body.fiche .perf{height:14px;margin-top:4px}
   position:absolute;top:50%;left:16px;right:16px;height:0;
   border-top:2px dashed rgba(26,26,46,.2);display:block
 }
-.fermer-app{
-  position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:46;
-  width:40px;height:40px;border-radius:50%;
-  display:none;align-items:center;justify-content:center;
-  background:var(--rouge);color:var(--blanc);
-  box-shadow:0 3px 12px -3px rgba(232,0,28,.6)
-}
-body.qrview .fermer-app{display:inline-flex}
-.fermer-app svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 
 .sortir{
-  position:absolute;right:14px;top:-21px;z-index:3;
-  width:34px;height:34px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
+  position:fixed;left:14px;top:14px;z-index:46;
+  width:36px;height:36px;border-radius:50%;
+  display:none;align-items:center;justify-content:center;
   background:var(--rouge);color:var(--blanc);
   box-shadow:0 2px 8px -2px rgba(232,0,28,.55)
 }
+body.fiche .sortir.on{display:inline-flex}
+.sortir.inverse{background:var(--blanc);color:var(--rouge);box-shadow:0 2px 8px -2px rgba(0,0,0,.4)}
 .sortir svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 
 .stub{padding:2px 16px 18px;text-align:center}
@@ -251,7 +244,7 @@ body.fiche .pass{max-width:100%;width:100%}
 body.fiche .pass-id{padding:16px 16px 2px}
 body.fiche .pass-id h2{font-size:clamp(23px,6.6vw,30px)}
 body.fiche .pass-role{font-size:15px}
-body.fiche .avatar{width:58px;height:58px;font-size:20px}
+body.fiche .avatar{width:72px;height:72px;font-size:24px}
 body.fiche .rows{padding:0 10px}
 body.fiche .row{padding:8px 9px}
 body.fiche .row .ic{width:34px;height:34px}
@@ -325,6 +318,28 @@ button.nm:hover b{text-decoration:underline}
 
 
 
+
+/* ---------- préparation de la photo ---------- */
+.photo-tool{margin-top:14px;border:1px solid var(--trait);border-radius:11px;overflow:hidden}
+.photo-tool .head{
+  padding:11px 13px;background:#fcfbfa;border-bottom:1px solid var(--trait);
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gris)
+}
+.photo-tool .body{padding:14px;display:grid;gap:12px;justify-items:center}
+.crop{
+  width:220px;height:220px;border-radius:50%;overflow:hidden;position:relative;
+  background:var(--creme);box-shadow:0 0 0 1px var(--trait),0 0 0 8px var(--blanc),0 0 0 9px var(--trait);
+  touch-action:none;cursor:grab
+}
+.crop canvas{display:block;width:100%;height:100%}
+.crop.vide{display:grid;place-items:center;
+  font-size:12.5px;color:var(--gris);text-align:center;padding:24px;cursor:default}
+.zoom{width:220px;display:flex;align-items:center;gap:10px}
+.zoom input{flex:1;padding:0;height:26px;accent-color:var(--bordeaux)}
+.zoom span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gris);letter-spacing:.1em}
+.photo-tool .actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+
 .switch{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:12px 14px;border:1px solid var(--trait);border-radius:10px;background:var(--blanc);
@@ -397,7 +412,7 @@ body.qrview{background:var(--blanc)}
 <body>
 <div id="app"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<button class="fermer-app" id="fermerApp" type="button" aria-label="Fermer l'application">
+<button class="sortir" id="sortir" type="button" aria-label="Revenir à mon QR code" hidden>
 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 6l8 8M14 6l-8 8"/></svg></button>
 <button class="install" id="install" type="button" hidden></button>
 <button class="jump" id="jump" type="button" hidden>Mon QR code
@@ -669,8 +684,8 @@ function buildVCard(f){
 /* Une photo n'est acceptée qu'en https : évite les contenus mixtes et les URL exotiques. */
 function safeImg(u){u=String(u||'').trim();
  if(/^https:\/\//i.test(u))return u;
- /* fichier déposé dans le dépôt, à côté de index.html */
- if(/^[\w][\w .\-]*\.(png|jpe?g|svg|webp)$/i.test(u))return u;
+ /* fichier du dépôt : à côté de index.html ou dans un sous-dossier, ex. photos/nom.jpg */
+ if(/^[\w][\w .\-]*(\/[\w][\w .\-]*)?\.(png|jpe?g|svg|webp)$/i.test(u))return u;
  return'';}
 function normUrl(u){u=String(u||'').trim();
  if(!u)return'';
@@ -790,11 +805,6 @@ function renderPass(f,opts){
 
  /* talon */
  var perf=el('div',{class:'perf'});perf.appendChild(el('i'));
- if(opts.onSortir){
-  var x=el('button',{class:'sortir',type:'button','aria-label':'Revenir à mon QR code'},
-   '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 6l8 8M14 6l-8 8"/></svg>');
-  x.addEventListener('click',opts.onSortir);
-  perf.appendChild(x);}
  wrap.appendChild(perf);
  var stub=el('div',{class:'stub'});
  if(opts.qrText){
@@ -819,6 +829,24 @@ function renderPass(f,opts){
 /* ============================================================
    7. VUE FICHE PUBLIQUE
    ============================================================ */
+/* La croix se cale en haut de la bande blanche au-dessus de la carte.
+   Fiche très fournie : cette bande peut tomber à 27 px, la croix passe
+   alors sur le bandeau du logo, en inverse pour rester lisible. */
+function placerSortir(){
+ var x=$('#sortir'),carte=$('body.fiche .pass');
+ if(!x||x.hidden||!carte)return;
+ var haut=carte.getBoundingClientRect().top,taille=x.offsetHeight||36;
+ /* Calée en haut de la bande blanche plutôt que centrée : centrée,
+    elle frôlait le bandeau du logo. */
+ if(haut-taille>=26){
+  x.classList.remove('inverse');
+  x.style.top=Math.max(10,Math.min(14,haut-taille-12))+'px';return;}
+ var bandeau=$('.pass-band',carte);
+ var hb=bandeau?bandeau.offsetHeight:52;
+ x.classList.add('inverse');
+ x.style.top=Math.round(haut+(hb-taille)/2)+'px';}
+window.addEventListener('resize',placerSortir);
+
 /* La carte est déjà à la largeur maximale : l'espace restant est en hauteur.
    On le redistribue aux lignes de contact, mais plafonné — sans plafond,
    trois contacts sur un grand écran donneraient 130 px d'air par ligne. */
@@ -853,10 +881,14 @@ function viewFiche(f){
  document.title=fullName?fullName+(f.societe?' · '+f.societe:''):'Fiche contact';
  var app=$('#app');app.innerHTML='';
  var w=el('div',{class:'fiche-wrap'});
- var carte=renderPass(f,{withSave:true,
-  onSortir:codeQR?function(){location.href=location.pathname+'?v=qr';}:null});
+ var carte=renderPass(f,{withSave:true});
  w.appendChild(carte);
- setTimeout(function(){ajusterNoms();occuperHauteur();},0);
+ var x=$('#sortir');
+ if(codeQR){
+  x.hidden=false;x.classList.add('on');
+  x.onclick=function(){location.href=location.pathname+'?v=qr';};}
+ else{x.hidden=true;x.classList.remove('on');x.onclick=null;}
+ setTimeout(function(){ajusterNoms();occuperHauteur();placerSortir();},0);
  /* Le partage est placé dans le talon : plus rien sous la carte, donc plus de défilement. */
  var act=$('.stub',carte)||el('div',{});
  if(navigator.share){
@@ -962,6 +994,7 @@ function viewQRVide(){
 
 function viewQR(code,f){
  document.body.className='qrview';
+ var xs=$('#sortir');if(xs){xs.hidden=true;xs.classList.remove('on');}
  var jp=$('#jump');if(jp)jp.hidden=true;
  vueInstall='qr';majInstall();
  document.title='QR code';
@@ -1028,12 +1061,119 @@ var GROUPES=[
   ['site','Site web','text','societe.com',1],
   ['linkedin','LinkedIn','text','linkedin.com/in/…',1],
   ['instagram','Instagram','text','instagram.com/…',1],
-  ['photo','Photo (URL)','text','https://…/photo.jpg',1],
+  ['photo','Photo','text','photos/nom.jpg ou https://…',1],
   ['logo','Logo de la société','text','logo-blanc.png ou https://…',0]]},
  {n:4,t:'Localisation',c:[
   ['adresse','Adresse','text','20 Rue Jamaa Bin Ayad',0],
   ['ville','Ville','text','Asilah',1],
   ['pays','Pays','text','Maroc',1]]}];
+
+/* ============================================================
+   PRÉPARATION DE LA PHOTO
+   La photo ne peut pas voyager dans le QR : un portrait pèse 15 000 octets
+   quand il en reste 2 400 dans le code. On produit donc un fichier à déposer
+   dans le dépôt, et seul son nom voyage dans l'adresse.
+   ============================================================ */
+var COTE_PHOTO=256;
+
+function outilPhoto(conteneur){
+ var bloc=el('section',{class:'photo-tool'});
+ bloc.appendChild(el('div',{class:'head'},'Pr\u00e9parer la photo'));
+ var body=el('div',{class:'body'});
+
+ var cadre=el('div',{class:'crop vide'});
+ cadre.textContent='Aucune photo choisie';
+ var cv=el('canvas',{width:String(COTE_PHOTO),height:String(COTE_PHOTO)});
+ var ctx=cv.getContext('2d');
+
+ var zoomBox=el('div',{class:'zoom'});
+ zoomBox.style.display='none';
+ var lz=el('span',{},'Zoom');
+ var rng=el('input',{type:'range',min:'100',max:'300',value:'100','aria-label':'Zoom de la photo'});
+ zoomBox.appendChild(lz);zoomBox.appendChild(rng);
+
+ var actions=el('div',{class:'actions'});
+ var bChoisir=el('button',{class:'btn btn-s',type:'button'},'Choisir une photo');
+ var bValider=el('button',{class:'btn btn-p',type:'button'},'Enregistrer la photo');
+ bValider.style.display='none';
+ actions.appendChild(bChoisir);actions.appendChild(bValider);
+
+ var input=el('input',{type:'file',accept:'image/*'});
+ input.style.display='none';
+
+ body.appendChild(cadre);body.appendChild(zoomBox);body.appendChild(actions);
+ body.appendChild(el('p',{class:'hint'},
+  'Cadrez le visage, enregistrez, puis d\u00e9posez le fichier obtenu dans le dossier photos/ du d\u00e9p\u00f4t. Le champ Photo se remplit tout seul.'));
+ body.appendChild(input);
+ bloc.appendChild(body);
+ conteneur.appendChild(bloc);
+
+ var img=null,zoom=1,dx=0,dy=0,base=1;
+
+ function dessiner(){
+  if(!img)return;
+  ctx.clearRect(0,0,COTE_PHOTO,COTE_PHOTO);
+  ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,COTE_PHOTO,COTE_PHOTO);
+  var e=base*zoom,w=img.width*e,h=img.height*e;
+  ctx.drawImage(img,(COTE_PHOTO-w)/2+dx,(COTE_PHOTO-h)/2+dy,w,h);}
+
+ function borner(){
+  var e=base*zoom,w=img.width*e,h=img.height*e;
+  var mx=Math.max(0,(w-COTE_PHOTO)/2),my=Math.max(0,(h-COTE_PHOTO)/2);
+  dx=Math.max(-mx,Math.min(mx,dx));dy=Math.max(-my,Math.min(my,dy));}
+
+ bChoisir.addEventListener('click',function(){input.click();});
+ input.addEventListener('change',function(){
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  var lecteur=new FileReader();
+  lecteur.onload=function(){
+   var im=new Image();
+   im.onload=function(){
+    img=im;
+    /* le plus petit c\u00f4t\u00e9 remplit le cercle : jamais de vide sur les bords */
+    base=COTE_PHOTO/Math.min(im.width,im.height);
+    zoom=1;dx=0;dy=0;rng.value='100';
+    cadre.textContent='';cadre.classList.remove('vide');
+    cadre.appendChild(cv);
+    zoomBox.style.display='flex';bValider.style.display='inline-flex';
+    dessiner();};
+   im.onerror=function(){toast('Image illisible');};
+   im.src=lecteur.result;};
+  lecteur.readAsDataURL(f);});
+
+ rng.addEventListener('input',function(){
+  zoom=parseInt(rng.value,10)/100;borner();dessiner();});
+
+ var glisse=false,px=0,py=0;
+ function debut(e){if(!img)return;glisse=true;var p=pos(e);px=p.x;py=p.y;
+  cadre.style.cursor='grabbing';}
+ function bouge(e){
+  if(!glisse||!img)return;
+  e.preventDefault();
+  var p=pos(e),f=COTE_PHOTO/cadre.clientWidth;
+  dx+=(p.x-px)*f;dy+=(p.y-py)*f;px=p.x;py=p.y;
+  borner();dessiner();}
+ function fin(){glisse=false;cadre.style.cursor='grab';}
+ function pos(e){var t=e.touches?e.touches[0]:e;return{x:t.clientX,y:t.clientY};}
+ cadre.addEventListener('mousedown',debut);
+ cadre.addEventListener('touchstart',debut,{passive:true});
+ window.addEventListener('mousemove',bouge);
+ cadre.addEventListener('touchmove',bouge,{passive:false});
+ window.addEventListener('mouseup',fin);
+ cadre.addEventListener('touchend',fin);
+
+ bValider.addEventListener('click',function(){
+  if(!img)return;
+  var nom=fileBase(state.f)+'.jpg';
+  cv.toBlob(function(bl){
+   if(!bl){toast('Enregistrement impossible');return;}
+   download(bl,nom);
+   state.f.photo='photos/'+nom;
+   viewGenerateur();
+   toast('Photo enregistr\u00e9e \u2014 d\u00e9posez-la dans photos/');
+  },'image/jpeg',0.82);});
+}
 
 function viewGenerateur(){
  document.body.className='';
@@ -1066,7 +1206,8 @@ function viewGenerateur(){
    lab.appendChild(inp);
    fields.appendChild(lab);});
   body.appendChild(fields);
-  if(g.n===3)body.appendChild(el('p',{class:'hint'},'La photo doit être une image déjà en ligne. Une image lourde alourdit le QR code : préférez une URL courte, sinon les initiales servent d\u2019avatar.'));
+  if(g.n===3)outilPhoto(body);
+  if(g.n===3)body.appendChild(el('p',{class:'hint'},'La photo n\u2019est jamais incluse dans le QR code, seul son chemin l\u2019est. Sans photo, les initiales servent d\u2019avatar.'));
   p.appendChild(body);
   colForm.appendChild(p);});
 
@@ -1156,6 +1297,7 @@ function viewGenerateur(){
  wrap.appendChild(grid);
  app.appendChild(wrap);
  vueInstall='app';majInstall();
+ var xs=$('#sortir');if(xs){xs.hidden=true;xs.classList.remove('on');}
  var jump=$('#jump');
  jump.hidden=false;
  jump.onclick=function(){
@@ -1292,18 +1434,6 @@ function fileBase(f){
  s=s.replace(/[^A-Za-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');
  return(s||'carte').toLowerCase();}
 
-/* Fermeture de l'application. Android n'autorise pas toujours une page
-   à se fermer elle-même : on tente, et on le dit si ça échoue. */
-(function(){
- var b=document.getElementById('fermerApp');
- if(!b)return;
- b.addEventListener('click',function(){
-  try{window.close();}catch(e){}
-  setTimeout(function(){
-   if(!document.hidden)
-    toast('Fermeture impossible ici \u2014 utilisez le bouton retour du t\u00e9l\u00e9phone');
-  },350);});
-})();
 
 /* ============================================================
    9. ROUTAGE
