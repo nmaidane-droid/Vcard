@@ -317,21 +317,11 @@ button.nm:hover b{text-decoration:underline}
 /* ---------- vue QR plein écran ---------- */
 body.qrview{background:var(--blanc)}
 .qr-full{
-  min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:18px;padding:20px 8px calc(20px + env(safe-area-inset-bottom));text-align:center
+  min-height:100dvh;display:flex;align-items:center;justify-content:center;
+  padding:8px;text-align:center
 }
 .qr-plate{padding:0;line-height:0;border-radius:10px;background:var(--blanc)}
 .qr-plate canvas{display:block;image-rendering:pixelated;border-radius:4px}
-.qr-full-name{
-  font-size:17px;font-weight:800;font-variation-settings:'wdth' 112,'wght' 800;
-  text-transform:uppercase;letter-spacing:-.01em
-}
-.qr-full-name span{font-weight:400;font-variation-settings:'wdth' 112,'wght' 400;font-size:.78em;color:var(--gris)}
-.qr-full-role{margin-top:3px;font-size:13.5px;color:var(--gris);font-weight:500}
-.qr-full-hint{
-  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;
-  text-transform:uppercase;color:#a5a5b4;line-height:1.9;max-width:32ch
-}
 
 /* ---------- toast ---------- */
 .toast{
@@ -847,8 +837,7 @@ function lienDe(code){return location.origin+location.pathname+'#c='+code;}
 function viewQR(code,f){
  document.body.className='qrview';
  var jp=$('#jump');if(jp)jp.hidden=true;
- var plein=((f.prenom||'')+' '+(f.nom||'')).trim();
- document.title=(plein||'QR')+' — QR code';
+ document.title='QR code';
  var app=$('#app');app.innerHTML='';
 
  var w=el('div',{class:'qr-full'});
@@ -858,12 +847,6 @@ function viewQR(code,f){
  plaque.addEventListener('click',function(){location.hash='#c='+code;});
  w.appendChild(plaque);
 
- var nom=el('div',{class:'qr-full-name'});
- if(f.prenom){nom.appendChild(elT('span',{},f.prenom));nom.appendChild(document.createTextNode(' '));}
- nom.appendChild(document.createTextNode(f.nom||''));
- w.appendChild(nom);
- if(f.fonction)w.appendChild(elT('div',{class:'qr-full-role'},f.fonction));
- w.appendChild(elT('div',{class:'qr-full-hint'},'Faites scanner ce code · Appuyez dessus pour voir la fiche'));
  app.appendChild(w);
 
  var qr=QRCodec.encode(lienDe(code),'M');
@@ -872,7 +855,7 @@ function viewQR(code,f){
  /* Le côté du QR est un multiple entier du module : sinon les pixels bavent au scan. */
  redessinerQR=function(){
   var n=qr.size+8;
-  var dispo=Math.min(window.innerWidth-16,window.innerHeight-190);
+  var dispo=Math.min(window.innerWidth-16,window.innerHeight-32);
   var cote=Math.max(n*2,Math.floor(dispo/n)*n);
   var dpr=Math.min(3,window.devicePixelRatio||1);
   qrToCanvas(qr,cv,Math.max(2,Math.round(cote*dpr/n)),4);
