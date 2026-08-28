@@ -261,7 +261,7 @@ body.fiche .pass-tagline{font-size:13.5px;padding:10px 12px;margin:11px 16px 0}
 body.fiche .stub{padding:2px 16px 14px}
 body.fiche .stub .btn{padding:13px 18px;font-size:15px;margin-top:8px}
 @media(min-width:600px){
-  body.fiche .pass{max-width:420px;margin:0 auto;flex:0 1 auto}
+  body.fiche .pass{max-width:420px;margin:0 auto}
   .fiche-wrap{justify-content:center;padding-top:24px}
 }
 
@@ -819,6 +819,29 @@ function renderPass(f,opts){
 /* ============================================================
    7. VUE FICHE PUBLIQUE
    ============================================================ */
+/* La carte est déjà à la largeur maximale : l'espace restant est en hauteur.
+   On le redistribue aux lignes de contact, mais plafonné — sans plafond,
+   trois contacts sur un grand écran donneraient 130 px d'air par ligne. */
+var AIR_MAX=13;
+function occuperHauteur(){
+ var carte=$('body.fiche .pass');
+ if(!carte)return;
+ var lignes=$$('.row',carte);
+ if(!lignes.length)return;
+ lignes.forEach(function(r){r.style.paddingTop='';r.style.paddingBottom='';});
+ if(window.innerWidth>=600)return;
+ var wrap=carte.parentNode;
+ var dispo=wrap.clientHeight-parseFloat(getComputedStyle(wrap).paddingTop)
+                            -parseFloat(getComputedStyle(wrap).paddingBottom);
+ var reste=dispo-carte.offsetHeight;
+ if(reste<8)return;
+ var air=Math.min(AIR_MAX,Math.floor(reste/lignes.length/2));
+ if(air<1)return;
+ lignes.forEach(function(r){
+  var p=parseFloat(getComputedStyle(r).paddingTop);
+  r.style.paddingTop=(p+air)+'px';r.style.paddingBottom=(p+air)+'px';});}
+window.addEventListener('resize',occuperHauteur);
+
 function viewFiche(f){
  document.body.className='fiche';
  $('#jump').hidden=true;
@@ -833,7 +856,7 @@ function viewFiche(f){
  var carte=renderPass(f,{withSave:true,
   onSortir:codeQR?function(){location.href=location.pathname+'?v=qr';}:null});
  w.appendChild(carte);
- setTimeout(ajusterNoms,0);
+ setTimeout(function(){ajusterNoms();occuperHauteur();},0);
  /* Le partage est placé dans le talon : plus rien sous la carte, donc plus de défilement. */
  var act=$('.stub',carte)||el('div',{});
  if(navigator.share){
