@@ -637,7 +637,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v28';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v29';   /* à incrémenter à chaque livraison, avec sw.js */
 var LOGO_DEFAUT='logo-blanc.png';
 var CHAMPS=['prenom','nom','fonction','societe','mobile','fixe','email','site',
             'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin',
@@ -816,7 +816,10 @@ function renderPass(f,opts){
  var adr=[f.adresse,f.ville,f.pays].filter(Boolean).join(', ');
  addRow('pin','Adresse',adr,adr?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(adr):null,true);
  if(rows.children.length)wrap.appendChild(rows);
- if(rows.children.length>5||(rows.children.length>4&&f.baseline))wrap.classList.add('dense');
+ /* Mode compact réservé à l'aperçu du générateur : sur la fiche, toutes
+    les cartes doivent se ressembler, quel que soit le nombre de contacts. */
+ if(!opts.withSave&&(rows.children.length>5||(rows.children.length>4&&f.baseline)))
+  wrap.classList.add('dense');
 
  /* talon */
  var perf=el('div',{class:'perf'});perf.appendChild(el('i'));
@@ -853,37 +856,15 @@ function placerSortir(){
  var haut=carte.getBoundingClientRect().top,taille=x.offsetHeight||36;
  /* Calée en haut de la bande blanche plutôt que centrée : centrée,
     elle frôlait le bandeau du logo. */
- if(haut-taille>=26){
+ if(haut-taille>=14){
   x.classList.remove('inverse');carte.classList.remove('croix-band');
-  x.style.top=Math.max(10,Math.min(14,haut-taille-12))+'px';return;}
+  x.style.top=Math.max(6,Math.min(14,haut-taille-6))+'px';return;}
  var bandeau=$('.pass-band',carte);
  var hb=bandeau?bandeau.offsetHeight:52;
  x.classList.add('inverse');carte.classList.add('croix-band');
  x.style.top=Math.round(haut+(hb-taille)/2)+'px';}
 window.addEventListener('resize',placerSortir);
 
-/* La carte est déjà à la largeur maximale : l'espace restant est en hauteur.
-   On le redistribue aux lignes de contact, mais plafonné — sans plafond,
-   trois contacts sur un grand écran donneraient 130 px d'air par ligne. */
-var AIR_MAX=13;
-function occuperHauteur(){
- var carte=$('body.fiche .pass');
- if(!carte)return;
- var lignes=$$('.row',carte);
- if(!lignes.length)return;
- lignes.forEach(function(r){r.style.paddingTop='';r.style.paddingBottom='';});
- if(window.innerWidth>=600)return;
- var wrap=carte.parentNode;
- var dispo=wrap.clientHeight-parseFloat(getComputedStyle(wrap).paddingTop)
-                            -parseFloat(getComputedStyle(wrap).paddingBottom);
- var reste=dispo-carte.offsetHeight;
- if(reste<8)return;
- var air=Math.min(AIR_MAX,Math.floor(reste/lignes.length/2));
- if(air<1)return;
- lignes.forEach(function(r){
-  var p=parseFloat(getComputedStyle(r).paddingTop);
-  r.style.paddingTop=(p+air)+'px';r.style.paddingBottom=(p+air)+'px';});}
-window.addEventListener('resize',occuperHauteur);
 
 function viewFiche(f){
  document.body.className='fiche';
@@ -903,7 +884,7 @@ function viewFiche(f){
   x.hidden=false;x.classList.add('on');
   x.onclick=function(){location.href=location.pathname+'?v=qr';};}
  else{x.hidden=true;x.classList.remove('on');x.onclick=null;}
- setTimeout(function(){ajusterNoms();occuperHauteur();placerSortir();},0);
+ setTimeout(function(){ajusterNoms();placerSortir();},0);
  /* Le partage est placé dans le talon : plus rien sous la carte, donc plus de défilement. */
  var act=$('.stub',carte)||el('div',{});
  if(navigator.share){
