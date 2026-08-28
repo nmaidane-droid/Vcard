@@ -233,6 +233,9 @@ body.fiche .pass.croix-band .co.centre{justify-content:flex-start}
   width:140px;height:140px;margin:4px auto 10px;display:block;
   border-radius:10px;background:var(--blanc)
 }
+.stub .aide{
+  margin:9px 2px 0;font-size:11.5px;line-height:1.4;color:var(--gris);text-align:center
+}
 .stub .cap{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
 .stub .btn{margin-top:10px}
 
@@ -640,7 +643,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v31';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v33';   /* à incrémenter à chaque livraison, avec sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -846,14 +849,31 @@ function renderPass(f,opts){
   stub.appendChild(el('div',{class:'cap'},opts.qrCaption||'Scannez pour ouvrir la fiche'));
  }
  if(opts.withSave){
+  var nomFichier=(fullName.replace(/[^\w\u00C0-\u017F -]/g,'').trim()||'contact').replace(/\s+/g,'-')+'.vcf';
+  function vcfBlob(){return new Blob([buildVCard(f)],{type:'text/vcard;charset=utf-8'});}
+
+  /* Voie principale — à l'essai. On demande au navigateur d'ouvrir le fichier
+     au lieu de le ranger : certains Android proposent alors Contacts directement,
+     d'autres affichent le texte brut. À confirmer sur plusieurs appareils. */
   var b=el('button',{class:'btn btn-p btn-full',type:'button'},'Ajouter à mes contacts');
   b.addEventListener('click',function(){
-   var vcf=buildVCard(f);
-   var nm=(fullName.replace(/[^\w\u00C0-\u017F -]/g,'').trim()||'contact').replace(/\s+/g,'-');
-   download(new Blob([vcf],{type:'text/vcard;charset=utf-8'}),nm+'.vcf');
-   retourBouton(b,'Contact t\u00e9l\u00e9charg\u00e9 \u2713',2400);
-   toast('Ouvrez le fichier t\u00e9l\u00e9charg\u00e9 pour l\u2019enregistrer');});
-  stub.appendChild(b);}
+   var u=URL.createObjectURL(vcfBlob());
+   var onglet=window.open(u,'_blank');
+   if(!onglet)location.href=u;   /* fenêtre bloquée : on ouvre sur place */
+   setTimeout(function(){URL.revokeObjectURL(u);},60000);
+   retourBouton(b,'Ouverture\u2026',2000);});
+  stub.appendChild(b);
+
+  /* Voie de secours — fonctionne partout, mais en deux temps. */
+  var b2=el('button',{class:'btn btn-s btn-full',type:'button'},'Télécharger le fichier contact');
+  b2.style.marginTop='8px';
+  b2.addEventListener('click',function(){
+   download(vcfBlob(),nomFichier);
+   retourBouton(b2,'Fichier t\u00e9l\u00e9charg\u00e9 \u2713',2400);});
+  stub.appendChild(b2);
+
+  stub.appendChild(elT('p',{class:'aide'},
+   'Ouvrez ensuite le fichier depuis vos t\u00e9l\u00e9chargements pour l\u2019enregistrer.'));}
  if(stub.children.length)wrap.appendChild(stub);
  return wrap;}
 
