@@ -1,6 +1,6 @@
 /* Service worker — Carte de visite numérique
    RÈGLE : incrémenter VERSION à chaque modification de index.html. */
-const VERSION = 'carte-v18';
+const VERSION = 'carte-v20';
 const SHELL = ['./', './?v=qr', './index.html', './manifest.json',
   './icon.svg', './icon.png', './logo-blanc.png'];
 
