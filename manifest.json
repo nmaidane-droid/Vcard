@@ -1,12 +1,13 @@
 {
-  "name": "Carte de visite numérique",
-  "short_name": "Ma carte",
-  "description": "Fiche de contact professionnelle accessible par QR code, avec enregistrement dans le répertoire.",
-  "start_url": "./",
+  "name": "Mon QR code",
+  "short_name": "Mon QR",
+  "description": "Affiche votre QR code en plein écran. Vos interlocuteurs le scannent et obtiennent votre fiche de contact.",
+  "id": "./?v=qr",
+  "start_url": "./?v=qr",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F5F3EF",
+  "background_color": "#FFFFFF",
   "theme_color": "#8B0000",
   "lang": "fr",
   "dir": "ltr",
@@ -16,23 +17,22 @@
   ],
   "icons": [
     {
-      "src": "icon-app.svg",
+      "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "icon-app.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-app.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "id": "./"
+  ]
 }

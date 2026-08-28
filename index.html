@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#8B0000">
 <title>Carte de visite numérique</title>
-<link id="mf" rel="manifest" href="manifest.json">
-<link id="ati" rel="apple-touch-icon" href="icon-app.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Fiche de contact professionnelle accessible par QR code.">
@@ -314,6 +314,24 @@ button.nm:hover b{text-decoration:underline}
 .empty{text-align:center;color:var(--gris);font-size:13.5px;padding:14px 0}
 
 
+.switch{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:12px 14px;border:1px solid var(--trait);border-radius:10px;background:var(--blanc);
+  cursor:pointer;margin-top:14px
+}
+.switch .lbl{font-size:14.5px;font-weight:500}
+.switch .lbl small{display:block;color:var(--gris);font-size:12.5px;font-weight:400;margin-top:2px}
+.switch .track{
+  width:46px;height:27px;border-radius:99px;background:#d8d4cf;flex:none;position:relative;
+  transition:background .18s
+}
+.switch .track::after{
+  content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+  background:var(--blanc);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s
+}
+.switch[aria-checked="true"] .track{background:var(--bordeaux)}
+.switch[aria-checked="true"] .track::after{transform:translateX(19px)}
+
 /* ---------- vue QR plein écran ---------- */
 body.qrview{background:var(--blanc)}
 .qr-full{
@@ -337,17 +355,6 @@ body.qrview{background:var(--blanc)}
 }
 .install.on{display:inline-flex}
 .install svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
-.install.note{
-  background:var(--blanc);color:var(--encre);border:1px solid var(--trait);
-  font-weight:500;font-size:12.5px;text-align:center;display:none;
-  line-height:1.45;padding:11px 15px;border-radius:12px;box-shadow:0 6px 20px -10px rgba(26,26,46,.4)
-}
-.install.note.on{display:block}
-.install.note b{display:block;font-weight:600;margin-bottom:2px}
-.install.note .fermer{
-  display:block;margin-top:6px;font-family:'IBM Plex Mono',monospace;
-  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#a5a5b4
-}
 
 /* ---------- toast ---------- */
 .toast{
@@ -716,12 +723,13 @@ function renderPass(f,opts){
  var logo=f.logow==='n'?'':(safeImg(f.logo)||LOGO_DEFAUT);
  if(logo)co.className='co centre';
  if(logo){
-  var im=el('img',{class:'co-logo'+(f.logow==='0'?'':' blanc'),src:logo,alt:f.societe||''});
+  var im=el('img',{class:'co-logo blanc',src:logo,alt:f.societe||''});
   im.onerror=function(){ /* logo introuvable : on retombe sur le nom de la société */
-   var t=elT('div',{class:'co-name'},f.societe||'Carte de visite');
+   var t=elT('div',{class:'co-name'},f.societe||'Fiche de contact');
+   co.className='co';
    if(im.parentNode)im.parentNode.replaceChild(t,im);};
   co.appendChild(im);}
- else co.appendChild(elT('div',{class:'co-name'},f.societe||'Carte de visite'));
+ else co.appendChild(elT('div',{class:'co-name'},f.societe||'Fiche de contact'));
  band.appendChild(co);
  wrap.appendChild(band);
 
@@ -834,7 +842,7 @@ var promptInstall=null,vueInstall='app';
 window.addEventListener('beforeinstallprompt',function(e){
  e.preventDefault();promptInstall=e;majInstall();});
 window.addEventListener('appinstalled',function(){
- promptInstall=null;masquerNote();majInstall();toast('Raccourci ajout\u00e9 \u00e0 l\u2019\u00e9cran d\u2019accueil');});
+ promptInstall=null;majInstall();toast('Raccourci ajout\u00e9 \u00e0 l\u2019\u00e9cran d\u2019accueil');});
 
 function enApplication(){
  return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
@@ -843,9 +851,8 @@ function majInstall(){
  var b=$('#install');if(!b)return;
  b.className='install';b.hidden=true;b.onclick=null;b.textContent='';
  /* La fiche publique appartient au visiteur : aucune proposition d'installation. */
- if(vueInstall==='fiche'){if(redessinerQR)redessinerQR();return;}
- var libelle=vueInstall==='qr'?'Ajouter mon QR \u00e0 l\u2019\u00e9cran d\u2019accueil'
-                             :'Ajouter le g\u00e9n\u00e9rateur \u00e0 l\u2019\u00e9cran d\u2019accueil';
+ if(vueInstall!=='qr'){if(redessinerQR)redessinerQR();return;}
+ var libelle='Installer mon QR code';
  if(promptInstall){
   b.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M5.5 8.5L10 13l4.5-4.5M4 16.5h12"/></svg>';
   b.appendChild(elT('span',{},libelle));
@@ -855,21 +862,7 @@ function majInstall(){
    p.prompt();p.userChoice.catch(function(){});};
   if(redessinerQR)setTimeout(redessinerQR,0);
   return;}
- /* Aucun événement d'installation : onglet restreint, application déjà ouverte,
-    ou navigateur qui ne le propose pas (Safari). On explique la marche à suivre. */
- if(vueInstall==='qr'&&!noteMasquee()){
-  b.className='install note on';b.hidden=false;
-  b.appendChild(elT('b',{},'Cr\u00e9er le raccourci'));
-  b.appendChild(elT('span',{},enApplication()
-   ? 'Ouvrez cette page dans Chrome, puis menu \u22ee \u2192 Ajouter \u00e0 l\u2019\u00e9cran d\u2019accueil.'
-   : 'Menu \u22ee \u2192 Ouvrir dans le navigateur, puis menu \u22ee \u2192 Ajouter \u00e0 l\u2019\u00e9cran d\u2019accueil.'));
-  b.appendChild(elT('span',{class:'fermer'},'Appuyez pour masquer'));
-  b.onclick=function(){masquerNote();majInstall();};}
  if(redessinerQR)setTimeout(redessinerQR,0);}
-
-var CLE_NOTE='carte.noteInstall';
-function noteMasquee(){try{return localStorage.getItem(CLE_NOTE)==='0';}catch(e){return false;}}
-function masquerNote(){try{localStorage.setItem(CLE_NOTE,'0');}catch(e){}}
 
 /* Retour visible : sur téléphone, un simple toast passe inaperçu. */
 function retourBouton(btn,texte,ms){
@@ -881,15 +874,6 @@ function retourBouton(btn,texte,ms){
  if(navigator.vibrate){try{navigator.vibrate(18);}catch(e){}}
  setTimeout(function(){btn.textContent=avant;btn.classList.remove('ok');
   btn.removeAttribute('data-occupe');},ms||2000);}
-
-/* Deux raccourcis, deux icônes : le manifeste suit la page ouverte. */
-function choisirManifeste(fichier){
- var l=document.getElementById('mf');
- if(l){if(l.getAttribute('href')===fichier)return;l.parentNode.removeChild(l);}
- var n=el('link',{id:'mf',rel:'manifest',href:fichier});
- document.head.appendChild(n);
- var t=document.getElementById('ati');
- if(t)t.setAttribute('href',fichier==='manifest-qr.json'?'icon.png':'icon-app.png');}
 
 /* L'écran ne doit pas s'éteindre pendant que l'autre personne cherche son appareil photo. */
 var veille=null;
@@ -1065,16 +1049,21 @@ function viewGenerateur(){
  sel.addEventListener('change',function(){state.f.skin=sel.value;refresh();});
  lab2.appendChild(sel);
  b5.appendChild(lab2);
- var lab3=el('label',{class:'f'});
- lab3.style.marginTop='14px';
- lab3.appendChild(el('span',{},'Couleur du logo'));
- var sel2=el('select');
- sel2.innerHTML='<option value="">Forcé en blanc</option><option value="0">Couleurs d\u2019origine</option><option value="n">Sans logo</option>';
- sel2.value=state.f.logow||'';
- sel2.addEventListener('change',function(){state.f.logow=sel2.value;refresh();});
- lab3.appendChild(sel2);
- b5.appendChild(lab3);
- b5.appendChild(el('p',{class:'hint'},'Champ vide\u00a0: le logo Afrijet Sahara livr\u00e9 avec l\u2019application s\u2019affiche. Pour un autre logo, d\u00e9posez le fichier \u00e0 c\u00f4t\u00e9 de index.html et saisissez son nom, ou collez une URL https. Pour n\u2019en afficher aucun, choisissez \u00ab\u00a0Sans logo\u00a0\u00bb ci-dessous.'));
+ var sw=el('div',{class:'switch',role:'switch',tabindex:'0'});
+ sw.innerHTML='<span class="lbl">Afficher le logo<small></small></span><span class="track"></span>';
+ function majSwitch(){
+  var actif=state.f.logow!=='n';
+  sw.setAttribute('aria-checked',actif?'true':'false');
+  $('.lbl small',sw).textContent=actif
+   ? 'Le logo remplace le nom dans le bandeau.'
+   : 'Le bandeau affiche le nom de la soci\u00e9t\u00e9.';}
+ function basculer(){state.f.logow=(state.f.logow==='n')?'':'n';majSwitch();refresh();}
+ sw.addEventListener('click',basculer);
+ sw.addEventListener('keydown',function(e){
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();basculer();}});
+ majSwitch();
+ b5.appendChild(sw);
+ b5.appendChild(el('p',{class:'hint'},'Champ vide\u00a0: le logo Afrijet Sahara livr\u00e9 avec l\u2019application s\u2019affiche. Pour un autre logo, d\u00e9posez le fichier \u00e0 c\u00f4t\u00e9 de index.html et saisissez son nom, ou collez une URL https.'));
  p5.appendChild(b5);
  colForm.appendChild(p5);
 
@@ -1234,6 +1223,19 @@ function refresh(){
   if(!f.prenom&&!f.nom){toast('Renseignez au moins un nom');return;}
   location.href=urlPleinEcran(packer(f));});
  actions.appendChild(b5);
+
+ /* Envoi à un collaborateur : il ouvre le lien, installe, et n'a plus rien à faire. */
+ var b6=el('button',{class:'btn btn-p',type:'button'},'Envoyer le QR');
+ b6.addEventListener('click',function(){
+  if(!f.prenom&&!f.nom){toast('Renseignez au moins un nom');return;}
+  var lien=location.origin+urlPleinEcran(packer(f));
+  var titre=((f.prenom||'')+' '+(f.nom||'')).trim();
+  if(navigator.share){
+   navigator.share({title:'QR code '+titre,
+    text:'Ouvre ce lien puis appuie sur \u00ab Installer \u00bb : ton QR code sera sur ton \u00e9cran d\u2019accueil.',
+    url:lien}).then(function(){retourBouton(b6,'Envoy\u00e9 \u2713');},function(){});}
+  else{copyText(lien,'Lien copi\u00e9');retourBouton(b6,'Lien copi\u00e9 \u2713');}});
+ actions.appendChild(b6);
  box.appendChild(actions);
 
  var lb=el('div',{class:'link-box'});
@@ -1261,10 +1263,9 @@ function route(){
  var code=mq?mq[1]:(pleinEcran?qrMemorise():'');
  if(code){
   var fq=unpacker(code);
-  if(fq){choisirManifeste('manifest-qr.json');viewQR(code,fq);return;}
+  if(fq){viewQR(code,fq);return;}
   toast('Lien illisible');}
- if(pleinEcran){choisirManifeste('manifest-qr.json');viewQRVide();return;}
- choisirManifeste('manifest.json');
+ if(pleinEcran){viewQRVide();return;}
  var m=h.match(/^#c=([A-Za-z2-7]+)$/i);
  if(m){
   var f=unpacker(m[1]);
