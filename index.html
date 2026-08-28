@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#8B0000">
 <title>Carte de visite numérique</title>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
+<link id="mf" rel="manifest" href="manifest.json">
+<link id="ati" rel="apple-touch-icon" href="icon-app.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Fiche de contact professionnelle accessible par QR code.">
@@ -106,7 +106,9 @@ input:focus,textarea:focus,select:focus{
   padding:12px 18px;border-radius:10px;font-size:14.5px;font-weight:600;
   border:1px solid transparent;transition:transform .12s,background .15s,border-color .15s
 }
-.btn:active{transform:translateY(1px)}
+.btn:active{transform:scale(.985)}
+.btn-p.ok{background:#5e0000}
+.btn-s.ok{border-color:var(--bordeaux);color:var(--bordeaux);background:#fff6f6}
 .btn-p{background:var(--band);color:var(--blanc)}
 .btn-p:hover{background:#a00}
 .btn-s{background:var(--blanc);border-color:var(--trait);color:var(--encre)}
@@ -129,6 +131,7 @@ input:focus,textarea:focus,select:focus{
 .pass-band .co{
   display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0
 }
+.pass-band .co.centre{justify-content:center}
 .pass-band .co-name{
   font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.18em;
   text-transform:uppercase;opacity:.95;min-width:0;overflow:hidden;
@@ -156,8 +159,8 @@ input:focus,textarea:focus,select:focus{
 }
 /* Prénom et nom sur la même ligne, même corps : le contraste vient de la graisse. */
 .pass-id h2 .given{
-  font-variation-settings:'wdth' 112,'wght' 400;font-weight:400;
-  color:var(--gris);margin-right:.32em
+  font-variation-settings:'wdth' 112,'wght' 400;font-weight:400;font-size:.7em;
+  color:var(--gris);margin-right:.3em
 }
 .pass-role{
   margin:7px 0 0;font-size:14px;color:var(--encre);font-weight:500
@@ -309,6 +312,26 @@ button.nm:hover b{text-decoration:underline}
 .icon-btn.bare:hover{border-color:var(--trait)}
 .icon-btn svg{width:16px;height:16px;display:block;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .empty{text-align:center;color:var(--gris);font-size:13.5px;padding:14px 0}
+
+
+/* ---------- vue QR plein écran ---------- */
+body.qrview{background:var(--blanc)}
+.qr-full{
+  min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:20px 8px calc(20px + env(safe-area-inset-bottom));text-align:center
+}
+.qr-plate{padding:0;line-height:0;border-radius:10px;background:var(--blanc)}
+.qr-plate canvas{display:block;image-rendering:pixelated;border-radius:4px}
+.qr-full-name{
+  font-size:17px;font-weight:800;font-variation-settings:'wdth' 112,'wght' 800;
+  text-transform:uppercase;letter-spacing:-.01em
+}
+.qr-full-name span{font-weight:400;font-variation-settings:'wdth' 112,'wght' 400;font-size:.78em;color:var(--gris)}
+.qr-full-role{margin-top:3px;font-size:13.5px;color:var(--gris);font-weight:500}
+.qr-full-hint{
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:#a5a5b4;line-height:1.9;max-width:32ch
+}
 
 /* ---------- toast ---------- */
 .toast{
@@ -672,6 +695,7 @@ function renderPass(f,opts){
  /* Champ vide : on utilise le logo livré avec l'application, ce qui fait
     apparaître le logo même sur les liens créés avant son ajout. */
  var logo=f.logow==='n'?'':(safeImg(f.logo)||LOGO_DEFAUT);
+ if(logo)co.className='co centre';
  if(logo){
   var im=el('img',{class:'co-logo'+(f.logow==='0'?'':' blanc'),src:logo,alt:f.societe||''});
   im.onerror=function(){ /* logo introuvable : on retombe sur le nom de la société */
@@ -741,7 +765,8 @@ function renderPass(f,opts){
    var vcf=buildVCard(f);
    var nm=(fullName.replace(/[^\w\u00C0-\u017F -]/g,'').trim()||'contact').replace(/\s+/g,'-');
    download(new Blob([vcf],{type:'text/vcard;charset=utf-8'}),nm+'.vcf');
-   toast('Fiche téléchargée — ouvrez-la pour l\u2019enregistrer');});
+   retourBouton(b,'Contact t\u00e9l\u00e9charg\u00e9 \u2713',2400);
+   toast('Ouvrez le fichier t\u00e9l\u00e9charg\u00e9 pour l\u2019enregistrer');});
   stub.appendChild(b);}
  if(stub.children.length)wrap.appendChild(stub);
  return wrap;}
@@ -762,18 +787,98 @@ function viewFiche(f){
  if(navigator.share){
   var s=el('button',{class:'btn btn-s btn-full',type:'button'},'Partager cette fiche');
   s.addEventListener('click',function(){
-   navigator.share({title:fullName||'Fiche contact',url:location.href}).catch(function(){});});
+   navigator.share({title:fullName||'Fiche contact',url:location.href})
+    .then(function(){retourBouton(s,'Partag\u00e9 \u2713');},function(){});});
   act.appendChild(s);}
  else{
   var c=el('button',{class:'btn btn-s btn-full',type:'button'},'Copier le lien de la fiche');
-  c.addEventListener('click',function(){copyText(location.href,'Lien copié');});
+  c.addEventListener('click',function(){copyText(location.href,'Lien copi\u00e9');
+   retourBouton(c,'Lien copi\u00e9 \u2713');});
   act.appendChild(c);}
  w.appendChild(act);
+ var bq=el('button',{class:'btn btn-s btn-full',type:'button'},'Afficher mon QR code');
+ bq.addEventListener('click',function(){location.hash='#qr='+packer(f);});
+ act.appendChild(bq);
  var foot=el('div',{class:'fiche-foot'});
  var fl=elT('a',{},'Créer ma carte');fl.setAttribute('href',location.pathname);
  foot.appendChild(fl);
  w.appendChild(foot);
  app.appendChild(w);}
+
+/* Retour visible : sur téléphone, un simple toast passe inaperçu. */
+function retourBouton(btn,texte,ms){
+ if(btn.getAttribute('data-occupe'))return;
+ var avant=btn.textContent;
+ btn.setAttribute('data-occupe','1');
+ btn.textContent=texte;
+ btn.classList.add('ok');
+ if(navigator.vibrate){try{navigator.vibrate(18);}catch(e){}}
+ setTimeout(function(){btn.textContent=avant;btn.classList.remove('ok');
+  btn.removeAttribute('data-occupe');},ms||2000);}
+
+/* Deux raccourcis, deux icônes : le manifeste suit la page ouverte. */
+function choisirManifeste(fichier){
+ var l=document.getElementById('mf');
+ if(l){if(l.getAttribute('href')===fichier)return;l.parentNode.removeChild(l);}
+ var n=el('link',{id:'mf',rel:'manifest',href:fichier});
+ document.head.appendChild(n);
+ var t=document.getElementById('ati');
+ if(t)t.setAttribute('href',fichier==='manifest-qr.json'?'icon.png':'icon-app.png');}
+
+/* L'écran ne doit pas s'éteindre pendant que l'autre personne cherche son appareil photo. */
+var veille=null;
+function garderEcranAllume(actif){
+ if(!actif){if(veille){try{veille.release();}catch(e){}veille=null;}return;}
+ if(!navigator.wakeLock||veille)return;
+ navigator.wakeLock.request('screen').then(function(w){veille=w;
+  w.addEventListener('release',function(){veille=null;});},function(){});}
+document.addEventListener('visibilitychange',function(){
+ if(document.visibilityState==='visible'&&document.body.classList.contains('qrview'))
+  garderEcranAllume(true);});
+
+/* ============================================================
+   7 bis. VUE QR PLEIN ÉCRAN
+   ============================================================ */
+var redessinerQR=null;
+window.addEventListener('resize',function(){if(redessinerQR)redessinerQR();});
+
+function lienDe(code){return location.origin+location.pathname+'#c='+code;}
+
+function viewQR(code,f){
+ document.body.className='qrview';
+ var jp=$('#jump');if(jp)jp.hidden=true;
+ var plein=((f.prenom||'')+' '+(f.nom||'')).trim();
+ document.title=(plein||'QR')+' — QR code';
+ var app=$('#app');app.innerHTML='';
+
+ var w=el('div',{class:'qr-full'});
+ var plaque=el('button',{class:'qr-plate',type:'button','aria-label':'Ouvrir ma fiche'});
+ var cv=el('canvas');
+ plaque.appendChild(cv);
+ plaque.addEventListener('click',function(){location.hash='#c='+code;});
+ w.appendChild(plaque);
+
+ var nom=el('div',{class:'qr-full-name'});
+ if(f.prenom){nom.appendChild(elT('span',{},f.prenom));nom.appendChild(document.createTextNode(' '));}
+ nom.appendChild(document.createTextNode(f.nom||''));
+ w.appendChild(nom);
+ if(f.fonction)w.appendChild(elT('div',{class:'qr-full-role'},f.fonction));
+ w.appendChild(elT('div',{class:'qr-full-hint'},'Faites scanner ce code · Appuyez dessus pour voir la fiche'));
+ app.appendChild(w);
+
+ var qr=QRCodec.encode(lienDe(code),'M');
+ if(!qr){toast('QR illisible');return;}
+
+ /* Le côté du QR est un multiple entier du module : sinon les pixels bavent au scan. */
+ redessinerQR=function(){
+  var n=qr.size+8;
+  var dispo=Math.min(window.innerWidth-16,window.innerHeight-190);
+  var cote=Math.max(n*2,Math.floor(dispo/n)*n);
+  var dpr=Math.min(3,window.devicePixelRatio||1);
+  qrToCanvas(qr,cv,Math.max(2,Math.round(cote*dpr/n)),4);
+  cv.style.width=cote+'px';cv.style.height=cote+'px';};
+ redessinerQR();
+ garderEcranAllume(true);}
 
 function copyText(txt,msg){
  if(navigator.clipboard&&navigator.clipboard.writeText){
@@ -1024,16 +1129,22 @@ function refresh(){
   var scale=Math.max(8,Math.min(24,Math.floor(1800/(qr.size+8))));
   var c=document.createElement('canvas');
   qrToCanvas(qr,c,scale,4);
-  c.toBlob(function(bl){download(bl,'qr-'+fileBase(f)+'.png');toast('PNG téléchargé');});});
+  c.toBlob(function(bl){download(bl,'qr-'+fileBase(f)+'.png');
+   retourBouton(b1,'PNG t\u00e9l\u00e9charg\u00e9 \u2713');});});
  var b2=el('button',{class:'btn btn-s',type:'button'},'Télécharger le SVG');
  b2.addEventListener('click',function(){
   download(new Blob([qrToSvg(qr,4)],{type:'image/svg+xml'}),'qr-'+fileBase(f)+'.svg');
-  toast('SVG téléchargé — idéal pour l\u2019impression');});
+  retourBouton(b2,'SVG t\u00e9l\u00e9charg\u00e9 \u2713');});
  actions.appendChild(b1);actions.appendChild(b2);
 
  var b3=el('button',{class:'btn btn-s',type:'button'},'Ouvrir la fiche');
  b3.addEventListener('click',function(){window.open(ficheUrl(f),'_blank','noopener');});
  actions.appendChild(b3);
+ var b5=el('button',{class:'btn btn-s',type:'button'},'Afficher en plein écran');
+ b5.addEventListener('click',function(){
+  if(!f.prenom&&!f.nom){toast('Renseignez au moins un nom');return;}
+  location.hash='#qr='+packer(f);});
+ actions.appendChild(b5);
  box.appendChild(actions);
 
  var lb=el('div',{class:'link-box'});
@@ -1054,6 +1165,14 @@ function fileBase(f){
    ============================================================ */
 function route(){
  var h=location.hash||'';
+ garderEcranAllume(false);
+ redessinerQR=null;
+ var mq=h.match(/^#qr=([A-Za-z2-7]+)$/i);
+ if(mq){
+  var fq=unpacker(mq[1]);
+  if(fq){choisirManifeste('manifest-qr.json');viewQR(mq[1],fq);return;}
+  toast('Lien illisible');}
+ choisirManifeste('manifest.json');
  var m=h.match(/^#c=([A-Za-z2-7]+)$/i);
  if(m){
   var f=unpacker(m[1]);
