@@ -787,7 +787,7 @@ function viewFiche(f){
   act.appendChild(c);}
  w.appendChild(act);
  var bq=el('button',{class:'btn btn-s btn-full',type:'button'},'Afficher mon QR code');
- bq.addEventListener('click',function(){location.hash='#qr='+packer(f);});
+ bq.addEventListener('click',function(){location.href=urlPleinEcran(packer(f));});
  act.appendChild(bq);
  var foot=el('div',{class:'fiche-foot'});
  var fl=elT('a',{},'Créer ma carte');fl.setAttribute('href',location.pathname);
@@ -834,6 +834,30 @@ window.addEventListener('resize',function(){if(redessinerQR)redessinerQR();});
 
 function lienDe(code){return location.origin+location.pathname+'#c='+code;}
 
+/* Le raccourci ouvre une adresse fixe (?v=qr) : Chrome crée toujours le raccourci
+   vers l'adresse de départ du manifeste, jamais vers la page affichée.
+   La fiche à montrer est donc mémorisée sur l'appareil. */
+var CLE_QR='carte.qr';
+function memoriserQR(code){try{localStorage.setItem(CLE_QR,code);}catch(e){}}
+function qrMemorise(){try{return localStorage.getItem(CLE_QR)||'';}catch(e){return'';}}
+function urlPleinEcran(code){return location.pathname+'?v=qr#qr='+code;}
+
+/* Raccourci ouvert avant qu'une fiche ait été choisie. */
+function viewQRVide(){
+ document.body.className='';
+ var jp=$('#jump');if(jp)jp.hidden=true;
+ document.title='Mon QR code';
+ var app=$('#app');app.innerHTML='';
+ var w=el('div',{class:'wrap',style:'padding-top:64px;max-width:440px;text-align:center'});
+ w.appendChild(el('div',{class:'eyebrow'},'Mon QR code'));
+ w.appendChild(elT('h1',{style:'font-size:26px;margin:10px 0 12px;font-weight:800'},'Aucune fiche choisie'));
+ w.appendChild(elT('p',{style:'color:var(--gris);font-size:14.5px;margin:0 0 22px'},
+  'Ouvrez le g\u00e9n\u00e9rateur, chargez votre fiche puis appuyez sur \u00ab Afficher en plein \u00e9cran \u00bb. Ce raccourci montrera ensuite ce code directement.'));
+ var b=elT('a',{class:'btn btn-p'},'Ouvrir le g\u00e9n\u00e9rateur');
+ b.setAttribute('href',location.pathname);
+ w.appendChild(b);
+ app.appendChild(w);}
+
 function viewQR(code,f){
  document.body.className='qrview';
  var jp=$('#jump');if(jp)jp.hidden=true;
@@ -844,11 +868,12 @@ function viewQR(code,f){
  var plaque=el('button',{class:'qr-plate',type:'button','aria-label':'Ouvrir ma fiche'});
  var cv=el('canvas');
  plaque.appendChild(cv);
- plaque.addEventListener('click',function(){location.hash='#c='+code;});
+ plaque.addEventListener('click',function(){location.href=location.pathname+'#c='+code;});
  w.appendChild(plaque);
 
  app.appendChild(w);
 
+ memoriserQR(code);
  var qr=QRCodec.encode(lienDe(code),'M');
  if(!qr){toast('QR illisible');return;}
 
@@ -1126,7 +1151,7 @@ function refresh(){
  var b5=el('button',{class:'btn btn-s',type:'button'},'Afficher en plein écran');
  b5.addEventListener('click',function(){
   if(!f.prenom&&!f.nom){toast('Renseignez au moins un nom');return;}
-  location.hash='#qr='+packer(f);});
+  location.href=urlPleinEcran(packer(f));});
  actions.appendChild(b5);
  box.appendChild(actions);
 
@@ -1151,10 +1176,13 @@ function route(){
  garderEcranAllume(false);
  redessinerQR=null;
  var mq=h.match(/^#qr=([A-Za-z2-7]+)$/i);
- if(mq){
-  var fq=unpacker(mq[1]);
-  if(fq){choisirManifeste('manifest-qr.json');viewQR(mq[1],fq);return;}
+ var pleinEcran=/[?&]v=qr(&|$)/.test(location.search);
+ var code=mq?mq[1]:(pleinEcran?qrMemorise():'');
+ if(code){
+  var fq=unpacker(code);
+  if(fq){choisirManifeste('manifest-qr.json');viewQR(code,fq);return;}
   toast('Lien illisible');}
+ if(pleinEcran){choisirManifeste('manifest-qr.json');viewQRVide();return;}
  choisirManifeste('manifest.json');
  var m=h.match(/^#c=([A-Za-z2-7]+)$/i);
  if(m){

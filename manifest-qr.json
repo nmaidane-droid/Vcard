@@ -2,7 +2,7 @@
   "name": "Mon QR code",
   "short_name": "Mon QR",
   "description": "Affiche votre QR code en plein écran pour le faire scanner.",
-  "start_url": "./",
+  "start_url": "./?v=qr",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -33,5 +33,6 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ]
+  ],
+  "id": "./?v=qr"
 }
