@@ -189,6 +189,7 @@ input:focus,textarea:focus,select:focus{
 .row .go svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 .perf{position:relative;height:18px;margin-top:6px}
+body.fiche .perf{height:14px;margin-top:4px}
 .perf::before,.perf::after{
   content:"";position:absolute;top:50%;transform:translateY(-50%);
   width:var(--notch);height:var(--notch);border-radius:50%;
@@ -223,8 +224,8 @@ input:focus,textarea:focus,select:focus{
 /* ---------- vue fiche publique ---------- */
 body.fiche{background:var(--creme);display:block}
 .fiche-wrap{
-  min-height:100dvh;padding:max(10px,env(safe-area-inset-top)) 10px calc(16px + env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;gap:12px
+  min-height:100dvh;padding:max(8px,env(safe-area-inset-top)) 8px calc(10px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:8px
 }
 /* Plein écran : la carte occupe toute la place, le talon reste calé en bas. */
 body.fiche .pass{
@@ -232,28 +233,24 @@ body.fiche .pass{
   display:flex;flex-direction:column
 }
 body.fiche .pass .perf{margin-top:auto}
-body.fiche .pass-id{padding:20px 18px 2px}
+body.fiche .pass-id{padding:16px 16px 2px}
 body.fiche .pass-id h2{font-size:clamp(23px,6.6vw,30px)}
 body.fiche .pass-role{font-size:15px}
 body.fiche .avatar{width:58px;height:58px;font-size:20px}
 body.fiche .rows{padding:0 10px}
-body.fiche .row{padding:10px 9px}
+body.fiche .row{padding:8px 9px}
 body.fiche .row .ic{width:34px;height:34px}
 body.fiche .row .ic svg{width:18px;height:18px}
 body.fiche .row .v{font-size:16px}
-body.fiche .pass-tagline{font-size:13.5px;padding:11px 13px;margin:14px 18px 0}
-body.fiche .stub{padding:2px 18px 20px}
-body.fiche .stub .btn{padding:15px 18px;font-size:15.5px;margin-top:12px}
+body.fiche .pass-tagline{font-size:13.5px;padding:10px 12px;margin:11px 16px 0}
+body.fiche .stub{padding:2px 16px 14px}
+body.fiche .stub .btn{padding:13px 18px;font-size:15px;margin-top:8px}
 @media(min-width:600px){
   body.fiche .pass{max-width:420px;margin:0 auto;flex:0 1 auto}
   .fiche-wrap{justify-content:center;padding-top:24px}
 }
-.fiche-actions{max-width:min(420px,100%);margin:0 auto;width:100%;display:grid;gap:10px}
-.fiche-foot{
-  text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;
-  letter-spacing:.16em;text-transform:uppercase;color:#a5a5b4
-}
-.fiche-foot a{color:inherit;text-decoration:none;border-bottom:1px solid var(--trait)}
+.fiche-actions{max-width:min(420px,100%);margin:0 auto;width:100%;display:grid;gap:8px}
+body.fiche .fiche-actions .btn{padding:11px 16px;font-size:14px}
 
 /* ---------- QR panneau ---------- */
 .qr-box{text-align:center;padding:6px 0 2px}
@@ -313,6 +310,17 @@ button.nm:hover b{text-decoration:underline}
 .icon-btn svg{width:16px;height:16px;display:block;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .empty{text-align:center;color:var(--gris);font-size:13.5px;padding:14px 0}
 
+
+.retour{
+  position:fixed;top:calc(10px + env(safe-area-inset-top));left:10px;z-index:44;
+  width:38px;height:38px;border-radius:50%;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.92);color:var(--encre);
+  box-shadow:0 2px 10px -3px rgba(26,26,46,.35);
+  backdrop-filter:blur(6px)
+}
+body.fiche .retour.on{display:inline-flex}
+.retour svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
 
 .switch{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
@@ -386,6 +394,8 @@ body.qrview{background:var(--blanc)}
 <body>
 <div id="app"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<button class="retour" id="retour" type="button" aria-label="Revenir à mon QR code" hidden>
+<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4L6.5 10l6 6"/></svg></button>
 <button class="install" id="install" type="button" hidden></button>
 <button class="jump" id="jump" type="button" hidden>Mon QR code
 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v11M5.5 10.5L10 15l4.5-4.5"/></svg></button>
@@ -805,6 +815,14 @@ function viewFiche(f){
  document.body.className='fiche';
  $('#jump').hidden=true;
  vueInstall='fiche';majInstall();
+ /* La flèche n'a de sens que si un QR est mémorisé sur cet appareil :
+    un client arrivant par un scan n'a nulle part où revenir. */
+ var r=$('#retour');
+ var codeQR=qrMemorise();
+ if(codeQR){
+  r.hidden=false;r.classList.add('on');
+  r.onclick=function(){location.href=location.pathname+'?v=qr';};}
+ else{r.hidden=true;r.classList.remove('on');r.onclick=null;}
  var fullName=((f.prenom||'')+' '+(f.nom||'')).trim();
  document.title=fullName?fullName+(f.societe?' · '+f.societe:''):'Fiche contact';
  var app=$('#app');app.innerHTML='';
@@ -824,13 +842,6 @@ function viewFiche(f){
    retourBouton(c,'Lien copi\u00e9 \u2713');});
   act.appendChild(c);}
  w.appendChild(act);
- var bq=el('button',{class:'btn btn-s btn-full',type:'button'},'Afficher mon QR code');
- bq.addEventListener('click',function(){location.href=urlPleinEcran(packer(f));});
- act.appendChild(bq);
- var foot=el('div',{class:'fiche-foot'});
- var fl=elT('a',{},'Créer ma carte');fl.setAttribute('href',location.pathname);
- foot.appendChild(fl);
- w.appendChild(foot);
  app.appendChild(w);}
 
 /* ============================================================
@@ -907,6 +918,7 @@ function viewQRVide(){
  document.body.className='';
  var jp=$('#jump');if(jp)jp.hidden=true;
  vueInstall='qr';majInstall();
+ var rr=$('#retour');if(rr){rr.hidden=true;rr.classList.remove('on');}
  document.title='Mon QR code';
  var app=$('#app');app.innerHTML='';
  var w=el('div',{class:'wrap',style:'padding-top:64px;max-width:440px;text-align:center'});
@@ -921,6 +933,7 @@ function viewQRVide(){
 
 function viewQR(code,f){
  document.body.className='qrview';
+ var rr=$('#retour');if(rr){rr.hidden=true;rr.classList.remove('on');}
  var jp=$('#jump');if(jp)jp.hidden=true;
  vueInstall='qr';majInstall();
  document.title='QR code';
@@ -1115,6 +1128,7 @@ function viewGenerateur(){
  wrap.appendChild(grid);
  app.appendChild(wrap);
  vueInstall='app';majInstall();
+ var rg=$('#retour');if(rg){rg.hidden=true;rg.classList.remove('on');}
  var jump=$('#jump');
  jump.hidden=false;
  jump.onclick=function(){
