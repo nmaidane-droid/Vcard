@@ -168,6 +168,8 @@ input:focus,textarea:focus,select:focus{
   font-variation-settings:'wdth' 112,'wght' 400;font-weight:400;font-size:.7em;
   color:var(--gris);margin-right:.3em
 }
+/* Le titre se détache du prénom : trois blocs distincts, pas un prénom composé. */
+.pass-id h2 .given.titre{margin-right:.48em}
 .pass-role{
   margin:7px 0 0;font-size:14px;color:var(--encre);font-weight:500;
   white-space:nowrap;overflow:hidden
@@ -643,7 +645,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v34';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v35';   /* à incrémenter à chaque livraison, avec sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -651,7 +653,7 @@ function niveauQR(texte){return texte.length>1500?'L':'M';}
 var LOGO_DEFAUT='logo-blanc.png';
 var CHAMPS=['prenom','nom','fonction','societe','mobile','fixe','email','site',
             'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin',
-            'logo','logow'];
+            'logo','logow','titre'];
 var SEP='\u001f';
 function packer(f){
  var vals=CHAMPS.map(function(k){return(f[k]||'').replace(/\u001f/g,' ');});
@@ -694,8 +696,8 @@ function buildVCard(f){
  var L=[];
  L.push('BEGIN:VCARD');
  L.push('VERSION:3.0');
- L.push('N:'+esc(f.nom)+';'+esc(f.prenom)+';;;');
- L.push('FN:'+esc(((f.prenom||'')+' '+(f.nom||'')).trim()));
+ L.push('N:'+esc(f.nom)+';'+esc(f.prenom)+';;'+esc(f.titre)+';');
+ L.push('FN:'+esc([f.titre,f.prenom,f.nom].filter(Boolean).join(' ')));
  if(f.societe)L.push('ORG:'+esc(f.societe));
  if(f.fonction)L.push('TITLE:'+esc(f.fonction));
  if(f.mobile)L.push('TEL;TYPE=CELL,VOICE:'+f.mobile.replace(/[^\d+]/g,''));
@@ -802,6 +804,7 @@ function renderPass(f,opts){
  id.appendChild(av);
  var txt=el('div',{class:'pass-name',style:'min-width:0;flex:1'});
  var h=el('h2');
+ if(f.titre)h.appendChild(elT('span',{class:'given titre'},f.titre));
  if(f.prenom)h.appendChild(elT('span',{class:'given'},f.prenom));
  h.appendChild(document.createTextNode(f.nom||(f.prenom?'':'Votre nom')));
  txt.appendChild(h);
@@ -1090,6 +1093,7 @@ var state={f:ficheVierge(),lastQr:null};
 
 var GROUPES=[
  {n:1,t:'Identité',c:[
+  ['titre','Titre','text','Captain, CDT, Dr…',1],
   ['prenom','Prénom','text','Noureddine',1],
   ['nom','Nom','text','Maidane',1],
   ['fonction','Fonction','text','Directeur des opérations',0],
