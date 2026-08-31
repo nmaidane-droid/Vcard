@@ -174,6 +174,9 @@ input:focus,textarea:focus,select:focus{
   margin:7px 0 0;font-size:14px;color:var(--encre);font-weight:500;
   white-space:nowrap;overflow:hidden
 }
+/* Seconde fonction : même corps, même couleur, même graisse. Seul l'écart
+   vertical est resserré pour que les deux lignes se lisent comme un bloc. */
+.pass-role.role2{margin-top:3px}
 .pass-tagline{
   margin:12px 16px 0;padding:10px 12px;background:var(--creme);border-radius:9px;
   font-size:13px;line-height:1.4;color:#4a4a5c;border-left:3px solid var(--accent)
@@ -381,9 +384,18 @@ button.nm:hover b{text-decoration:underline}
 /* ---------- vue QR plein écran ---------- */
 body.qrview{background:var(--blanc)}
 .qr-full{
-  min-height:100dvh;display:flex;align-items:center;justify-content:center;
+  min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:8px;text-align:center
 }
+.qr-mode{
+  margin-top:14px;padding:9px 14px;border-radius:999px;
+  border:1px solid var(--trait);background:var(--blanc);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--gris);
+  max-width:calc(100vw - 32px);line-height:1.5
+}
+.qr-mode:hover{border-color:var(--encre);color:var(--encre)}
+
 .qr-plate{padding:0;line-height:0;border-radius:10px;background:var(--blanc)}
 .qr-plate canvas{display:block;image-rendering:pixelated;border-radius:4px}
 
@@ -645,7 +657,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v35';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v38';   /* à incrémenter à chaque livraison, avec sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -653,7 +665,7 @@ function niveauQR(texte){return texte.length>1500?'L':'M';}
 var LOGO_DEFAUT='logo-blanc.png';
 var CHAMPS=['prenom','nom','fonction','societe','mobile','fixe','email','site',
             'adresse','ville','pays','whatsapp','linkedin','instagram','baseline','photo','skin',
-            'logo','logow','titre'];
+            'logo','logow','titre','fonction2'];
 var SEP='\u001f';
 function packer(f){
  var vals=CHAMPS.map(function(k){return(f[k]||'').replace(/\u001f/g,' ');});
@@ -699,7 +711,8 @@ function buildVCard(f){
  L.push('N:'+esc(f.nom)+';'+esc(f.prenom)+';;'+esc(f.titre)+';');
  L.push('FN:'+esc([f.titre,f.prenom,f.nom].filter(Boolean).join(' ')));
  if(f.societe)L.push('ORG:'+esc(f.societe));
- if(f.fonction)L.push('TITLE:'+esc(f.fonction));
+ var fonctions=[f.fonction,f.fonction2].filter(Boolean).join(' \u00b7 ');
+ if(fonctions)L.push('TITLE:'+esc(fonctions));
  if(f.mobile)L.push('TEL;TYPE=CELL,VOICE:'+f.mobile.replace(/[^\d+]/g,''));
  if(f.fixe)L.push('TEL;TYPE=WORK,VOICE:'+f.fixe.replace(/[^\d+]/g,''));
  if(f.email)L.push('EMAIL;TYPE=INTERNET,WORK:'+f.email);
@@ -809,6 +822,7 @@ function renderPass(f,opts){
  h.appendChild(document.createTextNode(f.nom||(f.prenom?'':'Votre nom')));
  txt.appendChild(h);
  if(f.fonction)txt.appendChild(elT('p',{class:'pass-role'},f.fonction));
+ if(f.fonction2)txt.appendChild(elT('p',{class:'pass-role role2'},f.fonction2));
  id.appendChild(txt);
  wrap.appendChild(id);
 
@@ -1050,25 +1064,59 @@ function viewQR(code,f){
  plaque.addEventListener('click',function(){location.href=location.pathname+'#c='+code;});
  w.appendChild(plaque);
 
+ /* Deux codes, un seul affiché à la fois : côte à côte ils feraient
+    la moitié de la largeur et deviendraient difficiles à scanner. */
+ var bascule=el('button',{class:'qr-mode',type:'button'});
+ var libelle=elT('span',{class:'txt'},'');
+ bascule.appendChild(libelle);
+ w.appendChild(bascule);
  app.appendChild(w);
 
  if(!estApercu()){
   if(!qrMemorise())memoriserQR(code);
   else{var f0=unpacker(code);if(f0)suivreSiMemePersonne(f0);}}
- var qr=QRCodec.encode(lienDe(code),niveauQR(lienDe(code)));
- if(!qr){toast('QR illisible');return;}
+
+ var lien=lienDe(code);
+ /* La vCard du QR se passe de la photo, de l'horodatage et de la note :
+    inutiles pour joindre quelqu'un, et ils coûtent douze modules. */
+ var vcf=buildVCard(f).split('\r\n')
+   .filter(function(l){return !/^(PHOTO|REV|NOTE)/.test(l);}).join('\r\n');
+ var codes={
+  fiche:{qr:QRCodec.encode(lien,niveauQR(lien)),
+         mot:'Ouvre la fiche compl\u00e8te',
+         autre:'Passer au code vCard'},
+  contact:{qr:QRCodec.encode(vcf,niveauQR(vcf)),
+         mot:'Enregistre le contact directement',
+         autre:'Passer au code fiche'}};
+ var mode='fiche';
+
+ function appliquer(){
+  var c=codes[mode];
+  if(!c.qr){toast('QR illisible');return;}
+  libelle.textContent=c.mot+' \u00b7 '+c.autre;
+  plaque.setAttribute('aria-label',mode==='fiche'?'Ouvrir ma fiche':'Code vCard');
+  redessinerQR();}
+
+ bascule.addEventListener('click',function(){
+  mode=(mode==='fiche')?'contact':'fiche';appliquer();});
 
  /* Le côté du QR est un multiple entier du module : sinon les pixels bavent au scan. */
  redessinerQR=function(){
+  var qr=codes[mode].qr;
+  if(!qr)return;
   var n=qr.size+8;
   var bi=$('#install');
   var reserve=(bi&&!bi.hidden)?bi.offsetHeight+26:0;
-  var dispo=Math.min(window.innerWidth-16,window.innerHeight-32-reserve);
-  var cote=Math.max(n*2,Math.floor(dispo/n)*n);
+  var dispo=Math.min(window.innerWidth-16,window.innerHeight-92-reserve);
+  /* On cale un nombre entier de pixels PHYSIQUES par module, pas de pixels CSS :
+     le code reste parfaitement net et gagne près de 10 % de largeur. */
   var dpr=Math.min(3,window.devicePixelRatio||1);
-  qrToCanvas(qr,cv,Math.max(2,Math.round(cote*dpr/n)),4);
+  var ech=Math.max(2,Math.floor(dispo*dpr/n));
+  var cote=n*ech/dpr;
+  qrToCanvas(qr,cv,ech,4);
   cv.style.width=cote+'px';cv.style.height=cote+'px';};
- redessinerQR();
+
+ appliquer();
  garderEcranAllume(true);}
 
 function copyText(txt,msg){
@@ -1096,7 +1144,8 @@ var GROUPES=[
   ['titre','Titre','text','Captain, CDT, Dr…',1],
   ['prenom','Prénom','text','Noureddine',1],
   ['nom','Nom','text','Maidane',1],
-  ['fonction','Fonction','text','Directeur des opérations',0],
+  ['fonction','Fonction','text','Directeur des opérations',1],
+  ['fonction2','Seconde fonction','text','Chef pilote (optionnel)',1],
   ['societe','Société','text','Afrijet Sahara',0]]},
  {n:2,t:'Coordonnées',c:[
   ['mobile','Mobile','tel','+212 6 79 32 32 32',1],
