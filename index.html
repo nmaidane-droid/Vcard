@@ -388,13 +388,18 @@ body.qrview{background:var(--blanc)}
   padding:8px;text-align:center
 }
 .qr-mode{
-  margin-top:14px;padding:9px 14px;border-radius:999px;
-  border:1px solid var(--trait);background:var(--blanc);
-  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--gris);
-  max-width:calc(100vw - 32px);line-height:1.5
+  margin-top:14px;padding:11px 20px;border-radius:999px;
+  background:var(--bordeaux);color:var(--blanc);
+  font-size:13.5px;font-weight:600;
+  box-shadow:0 3px 12px -4px rgba(139,0,0,.6);
+  max-width:calc(100vw - 32px)
 }
-.qr-mode:hover{border-color:var(--encre);color:var(--encre)}
+.qr-mode:active{transform:scale(.985)}
+.qr-mot{
+  margin-top:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--gris);
+  max-width:calc(100vw - 32px)
+}
 
 .qr-plate{padding:0;line-height:0;border-radius:10px;background:var(--blanc)}
 .qr-plate canvas{display:block;image-rendering:pixelated;border-radius:4px}
@@ -657,7 +662,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v38';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='v39';   /* à incrémenter à chaque livraison, avec sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -1067,9 +1072,9 @@ function viewQR(code,f){
  /* Deux codes, un seul affiché à la fois : côte à côte ils feraient
     la moitié de la largeur et deviendraient difficiles à scanner. */
  var bascule=el('button',{class:'qr-mode',type:'button'});
- var libelle=elT('span',{class:'txt'},'');
- bascule.appendChild(libelle);
  w.appendChild(bascule);
+ var mot=elT('div',{class:'qr-mot'},'');
+ w.appendChild(mot);
  app.appendChild(w);
 
  if(!estApercu()){
@@ -1093,7 +1098,8 @@ function viewQR(code,f){
  function appliquer(){
   var c=codes[mode];
   if(!c.qr){toast('QR illisible');return;}
-  libelle.textContent=c.mot+' \u00b7 '+c.autre;
+  bascule.textContent=c.autre;
+  mot.textContent=c.mot;
   plaque.setAttribute('aria-label',mode==='fiche'?'Ouvrir ma fiche':'Code vCard');
   redessinerQR();}
 
