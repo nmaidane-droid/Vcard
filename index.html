@@ -396,7 +396,7 @@ body.qrview{background:var(--blanc)}
 }
 .qr-mode:active{transform:scale(.985)}
 .qr-mot{
-  margin-top:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  margin-bottom:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--gris);
   max-width:calc(100vw - 32px)
 }
@@ -662,7 +662,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='1.0';   /* +0,1 à chaque livraison ; 1.9 -> 2.0. À reporter dans sw.js */
+var VERSION_APP='1.1';   /* +0,1 à chaque livraison ; 1.9 -> 2.0. À reporter dans sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -1063,6 +1063,10 @@ function viewQR(code,f){
  var app=$('#app');app.innerHTML='';
 
  var w=el('div',{class:'qr-full'});
+ /* La légende passe au-dessus du code : sous la bascule, on la lisait
+    comme une description du bouton et non du code affiché. */
+ var mot=elT('div',{class:'qr-mot'},'');
+ w.appendChild(mot);
  var plaque=el('button',{class:'qr-plate',type:'button','aria-label':'Ouvrir ma fiche'});
  var cv=el('canvas');
  plaque.appendChild(cv);
@@ -1073,8 +1077,6 @@ function viewQR(code,f){
     la moitié de la largeur et deviendraient difficiles à scanner. */
  var bascule=el('button',{class:'qr-mode',type:'button'});
  w.appendChild(bascule);
- var mot=elT('div',{class:'qr-mot'},'');
- w.appendChild(mot);
  app.appendChild(w);
 
  if(!estApercu()){
