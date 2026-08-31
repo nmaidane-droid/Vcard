@@ -662,7 +662,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='v39';   /* à incrémenter à chaque livraison, avec sw.js */
+var VERSION_APP='1.0';   /* +0,1 à chaque livraison ; 1.9 -> 2.0. À reporter dans sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -1093,7 +1093,9 @@ function viewQR(code,f){
   contact:{qr:QRCodec.encode(vcf,niveauQR(vcf)),
          mot:'Enregistre le contact directement',
          autre:'Passer au code fiche'}};
- var mode='fiche';
+ /* La vCard d'abord : le geste le plus fréquent est d'enregistrer le contact.
+    La fiche reste à un appui pour qui veut voir la carte. */
+ var mode='contact';
 
  function appliquer(){
   var c=codes[mode];
