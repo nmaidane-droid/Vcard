@@ -662,7 +662,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='1.1';   /* +0,1 à chaque livraison ; 1.9 -> 2.0. À reporter dans sw.js */
+var VERSION_APP='1.2';   /* +0,1 à chaque livraison ; 1.9 -> 2.0. À reporter dans sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -874,17 +874,36 @@ function renderPass(f,opts){
   var nomFichier=(fullName.replace(/[^\w\u00C0-\u017F -]/g,'').trim()||'contact').replace(/\s+/g,'-')+'.vcf';
   function vcfBlob(){return new Blob([buildVCard(f)],{type:'text/vcard;charset=utf-8'});}
 
-  /* Le téléchargement est la seule voie fiable : Chrome bloque l'ouverture
-     directe d'un fichier blob dans un onglet, essayé et écarté en v33.
-     La consigne sous le bouton évite qu'on reste bloqué après l'appui. */
+  /* Chemin le plus court : le panneau de partage reçoit le fichier et propose
+     Contacts parmi les destinations — un appui, la fiche s'ouvre dans le carnet
+     d'adresses, sans passer par les téléchargements. Le téléchargement reste
+     en secours là où le partage de fichier n'existe pas (Chrome bloque par
+     ailleurs l'ouverture directe d'un blob, essayé et écarté en v33). */
+  function partageFichierPossible(){
+   if(!navigator.canShare||!window.File)return false;
+   try{return navigator.canShare({files:[new File(['x'],'t.vcf',{type:'text/vcard'})]});}
+   catch(e){return false;}}
+
+  var partageOk=partageFichierPossible();
   var b=el('button',{class:'btn btn-p btn-full',type:'button'},'Ajouter à mes contacts');
   b.addEventListener('click',function(){
-   download(vcfBlob(),nomFichier);
-   retourBouton(b,'Fichier t\u00e9l\u00e9charg\u00e9 \u2713',2400);});
+   if(!partageOk){
+    download(vcfBlob(),nomFichier);
+    retourBouton(b,'Fichier t\u00e9l\u00e9charg\u00e9 \u2713',2400);
+    return;}
+   var fichier=new File([buildVCard(f)],nomFichier,{type:'text/vcard'});
+   navigator.share({files:[fichier],title:fullName||'Contact'})
+    .then(function(){retourBouton(b,'Contact envoy\u00e9 \u2713');},
+          function(err){
+      /* refus ou partage indisponible : on retombe sur le téléchargement */
+      if(err&&err.name==='AbortError')return;
+      download(vcfBlob(),nomFichier);
+      retourBouton(b,'Fichier t\u00e9l\u00e9charg\u00e9 \u2713',2400);});});
   stub.appendChild(b);
 
-  stub.appendChild(elT('p',{class:'aide'},
-   'Ouvrez ensuite le fichier depuis vos t\u00e9l\u00e9chargements pour l\u2019enregistrer.'));}
+  stub.appendChild(elT('p',{class:'aide'},partageOk
+   ? 'Choisissez Contacts dans la liste qui s\u2019ouvre.'
+   : 'Ouvrez ensuite le fichier depuis vos t\u00e9l\u00e9chargements pour l\u2019enregistrer.'));}
  if(stub.children.length)wrap.appendChild(stub);
  return wrap;}
 

@@ -1,6 +1,6 @@
 /* Service worker — Carte de visite numérique
    RÈGLE : reporter ici le numéro affiché par VERSION_APP dans index.html. */
-const VERSION = 'carte-1.1';
+const VERSION = 'carte-1.2';
 const SHELL = ['./', './?v=qr', './index.html', './manifest.json',
   './icon.svg', './icon.png', './logo-blanc.png'];
 
