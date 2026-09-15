@@ -663,7 +663,7 @@ function fromUtf8(str){var enc=encodeURIComponent(str),out=[],i;
  for(i=0;i<enc.length;i++){if(enc[i]==='%'){out.push(parseInt(enc.substr(i+1,2),16));i+=2;}
   else out.push(enc.charCodeAt(i));}return out;}
 
-var VERSION_APP='1.6';   /* +0,1 à chaque livraison ; 1.9 -> 2.0. À reporter dans sw.js */
+var VERSION_APP='1.7';   /* +0,1 à chaque livraison ; 1.9 -> 2.0. À reporter dans sw.js */
 /* Correction à 15 %, identique partout. Mesuré : passer à 25 % ferait grossir
    le code de 65 à 77 modules, soit 4,3 px par module à l'écran au lieu de 5,0.
    Pour un capteur ancien, la taille du module prime sur la redondance. */
@@ -1428,6 +1428,7 @@ function viewGenerateur(){
    ============================================================ */
 var EQUIPE=[
  {"titre": "", "prenom": "Anas", "nom": "BENNANI", "fonction": "Dirigeant Responsable", "societe": "Afrijet Sahara", "mobile": "+212689595901", "whatsapp": "+212689595901", "email": "anas.bennani@afrijet.ma", "site": "www.afrijet.ma", "adresse": "Lotissement Khalij Dakhla, Villa n°86 BP 3201", "ville": "Dakhla", "pays": "Maroc"},
+ {"titre": "", "prenom": "Marc", "nom": "GAFFAJOLI", "fonction": "Managing Director", "societe": "Afrijet Sahara", "mobile": "+212689595904", "whatsapp": "+212689595904", "email": "marc.gaffajoli@afrijet.ma", "site": "www.afrijet.ma", "adresse": "Lotissement Khalij Dakhla, Villa n°86 BP 3201", "ville": "Dakhla", "pays": "Maroc"},
  {"titre": "Captain", "prenom": "Noureddine", "nom": "ERRAZI", "fonction": "Responsable Désigné Opérations Aériennes", "societe": "Afrijet Sahara", "mobile": "+212689595949", "whatsapp": "+212689595949", "email": "n.maidane@afrijet.ma", "site": "www.afrijet.ma", "adresse": "Lotissement Khalij Dakhla, Villa n°86 BP 3201", "ville": "Dakhla", "pays": "Maroc"},
  {"titre": "Captain", "prenom": "Abdellatif", "nom": "DOGHMANI", "fonction": "Responsable Désigné Opérations Sol", "societe": "Afrijet Sahara", "mobile": "+212689595920", "whatsapp": "+212689595920", "email": "a.doghmani@afrijet.ma", "site": "www.afrijet.ma", "adresse": "Lotissement Khalij Dakhla, Villa n°86 BP 3201", "ville": "Dakhla", "pays": "Maroc"},
  {"titre": "", "prenom": "Halima", "nom": "RADI", "fonction": "Responsable Désigné Système Entretien", "societe": "Afrijet Sahara", "mobile": "+212689595940", "whatsapp": "+212689595940", "email": "halima.radi@afrijet.ma", "site": "www.afrijet.ma", "adresse": "Lotissement Khalij Dakhla, Villa n°86 BP 3201", "ville": "Dakhla", "pays": "Maroc"},
